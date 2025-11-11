@@ -153,6 +153,8 @@ export const CheckoutPage: React.FC = () => {
     const [footageLinks, setFootageLinks] = useState('');
     const [notes, setNotes] = useState('');
     const [submitting, setSubmitting] = useState(false);
+    const [error, setError] = useState<string>('');
+    const [success, setSuccess] = useState<string>('');
 
     useEffect(() => {
         const load = async () => {
@@ -163,6 +165,7 @@ export const CheckoutPage: React.FC = () => {
                 setPkg(found || null);
             } catch (err) {
                 console.error('Failed to load package', err);
+                setError('Failed to load package details');
             } finally {
                 setLoading(false);
             }
@@ -173,15 +176,27 @@ export const CheckoutPage: React.FC = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!pkg) return;
+        
+        setError('');
+        setSuccess('');
         setSubmitting(true);
+        
         try {
             const links = footageLinks.split(',').map(s => s.trim()).filter(Boolean);
+            if (links.length === 0) {
+                throw new Error('Please provide at least one footage link');
+            }
+            
             await apiCreateOrder(String(pkg.id), links, notes, pkg.price);
-            alert('Order placed successfully! Redirecting to dashboard...');
-            navigate('/dashboard');
+            setSuccess('✓ Order placed successfully! Redirecting to dashboard...');
+            
+            setTimeout(() => {
+                navigate('/dashboard');
+            }, 1500);
         } catch (err) {
-            console.error('Order creation failed', err);
-            alert('Failed to place order. See console for details.');
+            const errorMsg = err instanceof Error ? err.message : 'An unexpected error occurred. Please try again.';
+            console.error('Order creation failed:', errorMsg);
+            setError(`❌ ${errorMsg}`);
         } finally {
             setSubmitting(false);
         }
@@ -193,10 +208,23 @@ export const CheckoutPage: React.FC = () => {
     return (
         <div className="container mx-auto px-4 py-16 max-w-2xl">
             <SectionTitle title={`Order: ${pkg.name}`} subtitle="Checkout" />
+            
+            {error && (
+                <div className="mb-4 p-4 bg-red-900/20 border border-red-700 rounded-lg text-red-300">
+                    {error}
+                </div>
+            )}
+            
+            {success && (
+                <div className="mb-4 p-4 bg-green-900/20 border border-green-700 rounded-lg text-green-300">
+                    {success}
+                </div>
+            )}
+            
             <form onSubmit={handleSubmit} className="bg-brand-surface/50 backdrop-blur-sm p-8 rounded-lg border border-gray-800">
                 <div className="mb-4">
                     <label className="block text-sm text-gray-300 mb-2">Footage Links (comma separated)</label>
-                    <input value={footageLinks} onChange={e => setFootageLinks(e.target.value)} className="w-full px-4 py-2 bg-brand-surface border border-gray-700 rounded text-brand-text" placeholder="https://drive.google.com/..., https://youtube.com/..." />
+                    <input value={footageLinks} onChange={e => setFootageLinks(e.target.value)} className="w-full px-4 py-2 bg-brand-surface border border-gray-700 rounded text-brand-text" placeholder="https://drive.google.com/..., https://youtube.com/..." required />
                 </div>
                 <div className="mb-4">
                     <label className="block text-sm text-gray-300 mb-2">Instructions / Notes</label>
@@ -207,7 +235,7 @@ export const CheckoutPage: React.FC = () => {
                         <span className="text-2xl font-bold text-brand-text">${pkg.price}</span>
                         <p className="text-sm text-gray-400">Delivery in ~{pkg.deliveryTimeDays} days</p>
                     </div>
-                    <Button type="submit" disabled={submitting}>{submitting ? 'Placing Order...' : 'Place Order'}</Button>
+                    <Button type="submit" disabled={submitting || success !== ''}>{submitting ? 'Placing Order...' : 'Place Order'}</Button>
                 </div>
             </form>
         </div>

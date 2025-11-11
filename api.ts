@@ -6,8 +6,13 @@ import { portfolioVideos } from './portfolioData';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
+console.log('Supabase Config:', {
+    url: supabaseUrl ? '✓ SET' : '✗ MISSING',
+    key: supabaseAnonKey ? '✓ SET' : '✗ MISSING',
+});
+
 if (!supabaseUrl || !supabaseAnonKey) {
-    throw new Error("Supabase URL and Anon Key must be provided in .env.local");
+    throw new Error("Supabase URL and Anon Key must be provided in .env.local or as environment variables in your deployment platform");
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
@@ -163,37 +168,67 @@ export const apiUpdateOrder = async (orderId: string, updateData: { status?: Ord
 
 // --- Create Order ---
 export const apiCreateOrder = async (serviceId: string | number, footageLinks: string[], notes: string, priceEstimate: number = 0) => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('User must be logged in to create an order');
+    try {
+        console.log('🔵 Starting order creation...');
+        
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        
+        if (authError) {
+            console.error('🔴 Auth check failed:', authError);
+            throw new Error(`Authentication error: ${authError.message}`);
+        }
+        
+        if (!user) {
+            console.error('🔴 No user found - user not logged in');
+            throw new Error('User must be logged in to create an order');
+        }
 
-    const serviceIdNum = typeof serviceId === 'number' ? serviceId : Number(serviceId);
-    if (Number.isNaN(serviceIdNum)) {
-        throw new Error('serviceId must be a numeric id');
+        console.log('✓ User authenticated:', user.id);
+
+        const serviceIdNum = typeof serviceId === 'number' ? serviceId : Number(serviceId);
+        if (Number.isNaN(serviceIdNum)) {
+            console.error('🔴 Invalid serviceId:', serviceId);
+            throw new Error('serviceId must be a numeric id');
+        }
+
+        console.log('✓ Order payload prepared:', { serviceIdNum, user_id: user.id, footageLinks, notes, priceEstimate });
+
+        const payload = {
+            user_id: user.id,
+            service_id: serviceIdNum,
+            footageLinks: footageLinks || [],
+            notes: notes || '',
+            priceEstimate: priceEstimate || 0,
+            status: OrderStatus.Pending,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+        } as any;
+
+        console.log('⏳ Inserting order into Supabase...');
+
+        const { data, error } = await supabase
+            .from('orders')
+            .insert([payload])
+            .select()
+            .single();
+
+        if (error) {
+            console.error('🔴 Supabase insert error:', {
+                message: error.message,
+                code: error.code,
+                details: error.details,
+                hint: error.hint,
+            });
+            throw new Error(`Failed to create order: ${error.message || 'Unknown error'}`);
+        }
+
+        console.log('✅ Order created successfully:', data);
+        return data;
+    } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+        console.error('🔴 apiCreateOrder error:', errorMessage);
+        throw new Error(errorMessage);
     }
-
-    const payload = {
-        user_id: user.id,
-        service_id: serviceIdNum,
-        footageLinks: footageLinks || [],
-        notes: notes || '',
-        priceEstimate: priceEstimate || 0,
-        status: OrderStatus.Pending,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-    } as any;
-
-    const { data, error } = await supabase
-        .from('orders')
-        .insert([payload])
-        .select()
-        .single();
-
-    if (error) {
-        console.error('Error creating order:', error.message);
-        throw error;
-    }
-
-    return data;
 };
 
 // --- Video Upload Functions ---
