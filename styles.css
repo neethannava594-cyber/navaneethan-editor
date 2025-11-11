@@ -1,0 +1,143 @@
+:root {
+  --mouse-x: 50%;
+  --mouse-y: 50%;
+}
+
+body {
+  background-color: #0B0B0C; /* A deep, luxurious black */
+  background-image: radial-gradient(
+    circle 600px at var(--mouse-x) var(--mouse-y),
+    rgba(212, 175, 55, 0.15), /* A soft, blurred gold light based on brand-gold */
+    transparent 80%
+  );
+  /* A slight transition makes the light movement smoother */
+  transition: background 0.1s ease-out;
+}
+
+/* Keep the page fade-in effect as it's a nice UX touch */
+#root {
+  animation: fadeIn 0.8s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== GLOW EFFECTS ===== */
+
+/* Glow effect for headings */
+h1, h2, h3, h4, h5, h6 {
+  text-shadow: 0 0 8px rgba(212, 175, 55, 0.25);
+  transition: text-shadow 0.3s ease;
+}
+
+h1:hover, h2:hover, h3:hover {
+  text-shadow: 0 0 15px rgba(212, 175, 55, 0.45);
+}
+
+/* Main title glow - subtle and premium */
+.text-4xl, .text-5xl, .text-6xl, .text-7xl {
+  text-shadow: 0 0 12px rgba(212, 175, 55, 0.3);
+}
+
+/* Gold text glow - refined */
+.text-brand-gold, .text-yellow-400 {
+  text-shadow: 0 0 10px rgba(212, 175, 55, 0.4);
+}
+
+/* Logo glow effect - premium */
+.text-2xl.font-bold {
+  text-shadow: 0 0 12px rgba(212, 175, 55, 0.35);
+}
+
+/* Section title glow - elegant */
+.font-serif.font-bold {
+  text-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
+}
+
+/* Button text glow - subtle */
+button {
+  transition: text-shadow 0.3s ease;
+}
+
+button:hover {
+  text-shadow: 0 0 8px rgba(212, 175, 55, 0.4);
+}
+
+/* Active nav links - professional */
+.text-brand-gold:not(button) {
+  text-shadow: 0 0 10px rgba(212, 175, 55, 0.35);
+}
+
+/* Hero section - premium glow */
+.min-h-\[70vh\] h1 {
+  text-shadow: 0 0 15px rgba(212, 175, 55, 0.35);
+}
+
+/* Form inputs - subtle focus glow */
+input:focus, textarea:focus, select:focus {
+  box-shadow: 0 0 12px rgba(212, 175, 55, 0.25), inset 0 0 8px rgba(212, 175, 55, 0.08);
+}
+
+/* Badge glow - refined */
+.bg-brand-gold\/20 {
+  box-shadow: 0 0 8px rgba(212, 175, 55, 0.15);
+}
+
+/* Smooth professional glow animation */
+@keyframes professionalGlow {
+  0%, 100% {
+    text-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
+  }
+  50% {
+    text-shadow: 0 0 15px rgba(212, 175, 55, 0.45);
+  }
+}
+
+/* Professional title animation */
+@keyframes premiumTitleGlow {
+  0%, 100% {
+    text-shadow: 0 0 12px rgba(212, 175, 55, 0.3);
+  }
+  50% {
+    text-shadow: 0 0 18px rgba(212, 175, 55, 0.4);
+  }
+}
+
+.animate-professional-glow {
+  animation: professionalGlow 4s ease-in-out infinite;
+}
+
+.animate-premium-title {
+  animation: premiumTitleGlow 5s ease-in-out infinite;
+}
+
+/* Elegant box glow for cards */
+.bg-brand-surface\/50 {
+  box-shadow: 0 0 20px rgba(212, 175, 55, 0.08);
+  transition: box-shadow 0.3s ease;
+}
+
+.bg-brand-surface\/50:hover {
+  box-shadow: 0 0 30px rgba(212, 175, 55, 0.12);
+}
+
+/* Professional gradient glow */
+.bg-gradient-to-r {
+  filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.2));
+}
+
+/* Premium text styling */
+.font-serif {
+  letter-spacing: 0.5px;
+}
+
+/* Portfolio card glow */
+.group {
+  transition: all 0.3s ease;
+}
+
+.group:hover {
+  box-shadow: 0 0 25px rgba(212, 175, 55, 0.15);
+}
