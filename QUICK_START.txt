@@ -1,0 +1,63 @@
+# ⚡ QUICK START - 20 MINUTE DEPLOYMENT
+
+## Your Info
+```
+GitHub: navaneethan2013 / neethannava594@gmail.com / @143NDeepika2013
+Repo: navaneethan-editor
+Live URL: https://navaneethan-editor.vercel.app (after deploy)
+```
+
+## 4 STEPS TO LIVE
+
+### 1️⃣ CREATE GITHUB ACCOUNT (5 min)
+→ https://github.com/signup
+- Email: neethannava594@gmail.com
+- Username: navaneethan2013
+- Password: @143NDeepika2013
+- ✅ Verify email
+
+### 2️⃣ UPLOAD CODE (5 min)
+→ https://github.com/new
+- Repo name: navaneethan-editor
+- Public: YES
+- Upload all files from: c:\Users\SHIGADESIGN3\Downloads\Programs\navaneethan-editor\
+- ✅ Commit
+
+### 3️⃣ DEPLOY TO VERCEL (5 min)
+→ https://vercel.com/signup
+- Sign in with GitHub
+- Import repo: navaneethan2013/navaneethan-editor
+- Add env vars:
+  - VITE_SUPABASE_URL: https://pbrcqyeiaajrhucjvcuv.supabase.co
+  - VITE_SUPABASE_ANON_KEY: (copy from .env.local)
+- ✅ Deploy
+
+### 4️⃣ TEST LIVE (5 min)
+→ https://navaneethan-editor.vercel.app
+- Sign up
+- Go to Pricing → Choose Plan
+- Fill checkout → Place Order
+- ✅ Order appears in list
+
+## WHAT WAS FIXED
+
+✅ Order creation (service_id field)
+✅ Profile photo cropping (Face Detection)
+✅ HTTPS security (SSL certs)
+✅ Checkout page (new form)
+✅ Database schema aligned
+
+## FILES TO REFERENCE
+
+- `DEPLOYMENT_GUIDE.md` - Detailed instructions (READ THIS!)
+- `PROJECT_SUMMARY.md` - Full overview
+- `DEPLOYMENT_INSTRUCTIONS.md` - Alternative guide
+- `.env.local` - Your Supabase keys (upload to GitHub!)
+
+## SUPPORT
+
+❓ Check browser console: F12
+❓ Check Vercel logs: Deployments tab
+❓ See local dev: npm run dev
+
+## GO LIVE NOW! 🚀
