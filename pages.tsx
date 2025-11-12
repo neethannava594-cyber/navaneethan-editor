@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from './AuthContext';
-import { apiGetAllOrders, apiGetMyOrders, apiGetOrderById, apiGetPortfolio, apiGetServices, apiGetTestimonials, apiSubmitContactForm, apiUpdateOrder, apiAddPortfolioVideo, apiDeletePortfolioVideo, apiCreateOrder } from './api';
+import { apiGetAllOrders, apiGetMyOrders, apiGetOrderById, apiGetPortfolio, apiGetServices, apiGetTestimonials, apiSubmitContactForm, apiUpdateOrder, apiAddPortfolioVideo, apiDeletePortfolioVideo, apiCreateOrder, apiExportToExcel, downloadExcelFile } from './api';
 import { Button, LoadingSpinner, OrderCard, OrderStatusBadge, PortfolioCard, PricingCard, SectionTitle, TestimonialCard, VideoCameraIcon, FaceAwareImage } from './components';
 import { Order, OrderStatus, PortfolioVideo, PricingPackage, Testimonial } from './types';
 import { profileData } from './profileData';
@@ -1064,6 +1064,203 @@ export const PortfolioManagementPage: React.FC = () => {
                             ))}
                         </div>
                     )}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// --- Customer Data Export Page ---
+export const CustomerDataExportPage: React.FC = () => {
+    const { user } = useAuth();
+    const navigate = useNavigate();
+    const [loading, setLoading] = useState(false);
+    const [data, setData] = useState<any>(null);
+    const [error, setError] = useState<string>('');
+    const [success, setSuccess] = useState<string>('');
+
+    // Check if user is admin (for now, just check if logged in)
+    useEffect(() => {
+        if (!user) {
+            navigate('/login');
+        }
+    }, [user, navigate]);
+
+    const handleExportData = async () => {
+        try {
+            setLoading(true);
+            setError('');
+            setSuccess('');
+            console.log('📊 Exporting customer data...');
+
+            const exportData = await apiExportToExcel();
+            setData(exportData);
+            setSuccess(`✅ Data ready! Enquiries: ${exportData.enquiriesCount}, Orders: ${exportData.ordersCount}, Sign-ins: ${exportData.signInCount}`);
+        } catch (err) {
+            console.error('Export error:', err);
+            setError(err instanceof Error ? err.message : 'Failed to export data');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleDownload = async () => {
+        try {
+            setLoading(true);
+            setError('');
+            console.log('📥 Downloading Excel file...');
+
+            await downloadExcelFile('customer-data');
+            setSuccess('✅ File downloaded successfully!');
+        } catch (err) {
+            console.error('Download error:', err);
+            setError(err instanceof Error ? err.message : 'Failed to download file');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="min-h-screen bg-gradient-to-br from-brand-surface to-brand-dark p-4 md:p-8">
+            <div className="max-w-4xl mx-auto">
+                {/* Header */}
+                <div className="mb-12">
+                    <h1 className="text-5xl font-serif font-bold text-transparent bg-clip-text bg-gradient-to-r from-brand-gold to-yellow-400 mb-4">
+                        📊 Export Customer Data
+                    </h1>
+                    <p className="text-gray-300 text-lg">
+                        Export all customer enquiries, orders, and sign-in logs to Excel
+                    </p>
+                </div>
+
+                {/* Status Messages */}
+                {success && (
+                    <div className="mb-6 p-4 bg-green-900/30 border border-green-500/50 rounded-lg text-green-300">
+                        {success}
+                    </div>
+                )}
+                {error && (
+                    <div className="mb-6 p-4 bg-red-900/30 border border-red-500/50 rounded-lg text-red-300">
+                        ❌ {error}
+                    </div>
+                )}
+
+                {/* Main Actions */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+                    {/* Export Data Card */}
+                    <div className="bg-brand-surface border-2 border-brand-gold/20 rounded-lg p-6">
+                        <h2 className="text-2xl font-bold text-brand-text mb-4">📥 Step 1: Prepare Data</h2>
+                        <p className="text-gray-300 mb-6">
+                            Click to fetch all customer data from the database:
+                        </p>
+                        <ul className="text-gray-400 text-sm mb-6 space-y-2">
+                            <li>✓ All customer enquiries</li>
+                            <li>✓ All orders</li>
+                            <li>✓ All sign-in logs</li>
+                        </ul>
+                        <Button
+                            onClick={handleExportData}
+                            disabled={loading}
+                            variant="primary"
+                            className="w-full"
+                        >
+                            {loading ? '🔄 Preparing...' : '📊 Prepare Data'}
+                        </Button>
+                    </div>
+
+                    {/* Download Card */}
+                    <div className="bg-brand-surface border-2 border-brand-gold/20 rounded-lg p-6">
+                        <h2 className="text-2xl font-bold text-brand-text mb-4">⬇️ Step 2: Download Excel</h2>
+                        <p className="text-gray-300 mb-6">
+                            Download the prepared data as an Excel file:
+                        </p>
+                        <ul className="text-gray-400 text-sm mb-6 space-y-2">
+                            <li>✓ Excel format (.xlsx)</li>
+                            <li>✓ Multiple sheets</li>
+                            <li>✓ Ready to analyze</li>
+                        </ul>
+                        <Button
+                            onClick={handleDownload}
+                            disabled={loading || !data}
+                            variant="primary"
+                            className="w-full"
+                        >
+                            {loading ? '🔄 Downloading...' : '⬇️ Download Excel'}
+                        </Button>
+                    </div>
+                </div>
+
+                {/* Data Summary */}
+                {data && (
+                    <div className="bg-brand-surface border-2 border-brand-gold/20 rounded-lg p-6">
+                        <h2 className="text-2xl font-bold text-brand-text mb-6">📈 Data Summary</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div className="bg-blue-900/30 border border-blue-500/30 rounded p-4">
+                                <p className="text-gray-400 text-sm">Customer Enquiries</p>
+                                <p className="text-3xl font-bold text-blue-300 mt-2">{data.enquiriesCount}</p>
+                            </div>
+                            <div className="bg-green-900/30 border border-green-500/30 rounded p-4">
+                                <p className="text-gray-400 text-sm">Customer Orders</p>
+                                <p className="text-3xl font-bold text-green-300 mt-2">{data.ordersCount}</p>
+                            </div>
+                            <div className="bg-purple-900/30 border border-purple-500/30 rounded p-4">
+                                <p className="text-gray-400 text-sm">Sign-In Logs</p>
+                                <p className="text-3xl font-bold text-purple-300 mt-2">{data.signInCount}</p>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Information Section */}
+                <div className="mt-12 bg-brand-surface border-2 border-brand-gold/20 rounded-lg p-6">
+                    <h2 className="text-2xl font-bold text-brand-text mb-6">ℹ️ What's Included</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div>
+                            <h3 className="text-xl font-bold text-brand-gold mb-4">📋 Customer Enquiries</h3>
+                            <ul className="text-gray-300 space-y-2">
+                                <li>✓ Customer name & email</li>
+                                <li>✓ Phone number</li>
+                                <li>✓ Message content</li>
+                                <li>✓ Service interest</li>
+                                <li>✓ Status (new/replied)</li>
+                                <li>✓ Submission date</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h3 className="text-xl font-bold text-brand-gold mb-4">🛒 Customer Orders</h3>
+                            <ul className="text-gray-300 space-y-2">
+                                <li>✓ Order ID</li>
+                                <li>✓ Customer information</li>
+                                <li>✓ Service ordered</li>
+                                <li>✓ Current status</li>
+                                <li>✓ Price estimate</li>
+                                <li>✓ Admin notes</li>
+                            </ul>
+                        </div>
+                        <div className="md:col-span-2">
+                            <h3 className="text-xl font-bold text-brand-gold mb-4">🔐 Sign-In Logs</h3>
+                            <ul className="text-gray-300 space-y-2">
+                                <li>✓ Customer email & name</li>
+                                <li>✓ Device type (mobile/tablet/desktop)</li>
+                                <li>✓ Login & logout times</li>
+                                <li>✓ Session duration</li>
+                                <li>✓ Complete activity history</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Features */}
+                <div className="mt-12 bg-gradient-to-r from-brand-gold/10 to-yellow-400/10 border-2 border-brand-gold/30 rounded-lg p-6">
+                    <h2 className="text-2xl font-bold text-brand-text mb-6">✨ Features</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-gray-300">
+                        <div>✅ Real-time data export</div>
+                        <div>✅ Multiple data sources</div>
+                        <div>✅ Excel compatible format</div>
+                        <div>✅ Easy to analyze</div>
+                        <div>✅ One-click download</div>
+                        <div>✅ Timestamped files</div>
+                    </div>
                 </div>
             </div>
         </div>

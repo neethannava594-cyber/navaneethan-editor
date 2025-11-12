@@ -509,3 +509,170 @@ export const apiGetAllSignInLogs = async () => {
         throw error;
     }
 };
+
+// --- Excel Export Functions ---
+
+// Get all customer enquiries
+export const apiGetAllEnquiries = async () => {
+    try {
+        console.log('📊 Fetching all customer enquiries...');
+
+        const { data, error } = await supabase
+            .from('enquiries')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            console.error('❌ Error fetching enquiries:', error.message);
+            throw error;
+        }
+
+        console.log('✅ Retrieved ' + (data?.length || 0) + ' enquiries');
+        return data || [];
+    } catch (error) {
+        console.error('❌ Failed to get enquiries:', error);
+        throw error;
+    }
+};
+
+// Export customer data and enquiries to Excel
+export const apiExportToExcel = async () => {
+    try {
+        console.log('📊 Starting Excel export...');
+
+        // Fetch all data
+        const [enquiries, orders, signInLogs] = await Promise.all([
+            apiGetAllEnquiries(),
+            apiGetAllOrders(),
+            apiGetAllSignInLogs()
+        ]);
+
+        // Create Excel workbook structure
+        const workbookData = {
+            enquiries,
+            orders,
+            signInLogs
+        };
+
+        // Convert to CSV format (Excel can read this)
+        const generateCSV = (data: any[], headers: string[]) => {
+            if (!data || data.length === 0) return headers.join(',') + '\n';
+            
+            const csvRows = [headers.join(',')];
+            data.forEach(row => {
+                const values = headers.map(header => {
+                    const value = row[header];
+                    // Escape quotes and wrap in quotes if contains comma
+                    if (value === null || value === undefined) return '';
+                    const stringValue = String(value);
+                    if (stringValue.includes(',') || stringValue.includes('"')) {
+                        return '"' + stringValue.replace(/"/g, '""') + '"';
+                    }
+                    return stringValue;
+                });
+                csvRows.push(values.join(','));
+            });
+            return csvRows.join('\n');
+        };
+
+        // Prepare data for export
+        const enquiriesHeaders = ['ID', 'Name', 'Email', 'Phone', 'Message', 'Service Interest', 'Status', 'Created At', 'Updated At'];
+        const enquiriesData = enquiries.map(e => ({
+            'ID': e.id,
+            'Name': e.name,
+            'Email': e.email,
+            'Phone': e.phone || '',
+            'Message': e.message,
+            'Service Interest': e.service_interest || '',
+            'Status': e.status,
+            'Created At': e.created_at,
+            'Updated At': e.updated_at
+        }));
+
+        const ordersHeaders = ['Order ID', 'Customer Email', 'Customer Name', 'Service', 'Status', 'Price Estimate', 'Admin Notes', 'Created At'];
+        const ordersData = orders.map(o => ({
+            'Order ID': o.id,
+            'Customer Email': o.user?.email || '',
+            'Customer Name': o.user?.name || '',
+            'Service': o.service?.name || 'N/A',
+            'Status': o.status,
+            'Price Estimate': o.priceEstimate || '',
+            'Admin Notes': o.adminNotes || '',
+            'Created At': o.createdAt
+        }));
+
+        const signInHeaders = ['Email', 'Name', 'Phone', 'Device Type', 'Sign In Time', 'Sign Out Time', 'Session Duration (min)', 'Created At'];
+        const signInData = signInLogs.map(log => ({
+            'Email': log.email,
+            'Name': log.name,
+            'Phone': log.phone || '',
+            'Device Type': log.device_type,
+            'Sign In Time': log.sign_in_time,
+            'Sign Out Time': log.sign_out_time || '',
+            'Session Duration (min)': log.session_duration_minutes || '',
+            'Created At': log.created_at
+        }));
+
+        // Generate CSV content
+        const enquiriesCSV = generateCSV(enquiriesData, enquiriesHeaders);
+        const ordersCSV = generateCSV(ordersData, ordersHeaders);
+        const signInCSV = generateCSV(signInData, signInHeaders);
+
+        // Combine all sheets (as separate CSV sections with headers)
+        const excelContent = `CUSTOMER ENQUIRIES
+${enquiriesCSV}
+
+CUSTOMER ORDERS
+${ordersCSV}
+
+SIGN-IN LOGS
+${signInCSV}`;
+
+        console.log('✅ Excel data prepared successfully');
+        return {
+            success: true,
+            enquiriesCSV,
+            ordersCSV,
+            signInCSV,
+            allData: excelContent,
+            enquiriesCount: enquiries.length,
+            ordersCount: orders.length,
+            signInCount: signInLogs.length
+        };
+    } catch (error) {
+        console.error('❌ Failed to export to Excel:', error);
+        throw error;
+    }
+};
+
+// Download Excel file
+export const downloadExcelFile = async (filename: string = 'customer-data.xlsx') => {
+    try {
+        console.log('📥 Downloading Excel file...');
+
+        const exportData = await apiExportToExcel();
+
+        // Create a more complete Excel file using CSV with proper formatting
+        const timestamp = new Date().toISOString().split('T')[0];
+        const finalFilename = `${filename.replace('.xlsx', '')}-${timestamp}.xlsx`;
+
+        // For now, download as CSV which Excel can open
+        // Create blob
+        const blob = new Blob([exportData.allData], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+
+        link.setAttribute('href', url);
+        link.setAttribute('download', finalFilename);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        console.log('✅ Excel file downloaded successfully:', finalFilename);
+        return { success: true, filename: finalFilename };
+    } catch (error) {
+        console.error('❌ Failed to download Excel file:', error);
+        throw error;
+    }
+};

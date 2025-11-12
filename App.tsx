@@ -1,7 +1,7 @@
 import React, { ReactNode } from 'react';
 import { HashRouter, Routes, Route, Link, NavLink, useLocation, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './AuthContext';
-import { HomePage, PortfolioPage, PricingPage, AboutPage, ContactPage, LoginPage, SignupPage, DashboardPage, OrderDetailPage, PortfolioManagementPage, CheckoutPage } from './pages';
+import { HomePage, PortfolioPage, PricingPage, AboutPage, ContactPage, LoginPage, SignupPage, DashboardPage, OrderDetailPage, PortfolioManagementPage, CheckoutPage, CustomerDataExportPage } from './pages';
 import { Logo, Button, TwitterIcon, InstagramIcon, LinkedInIcon, ErrorBoundary } from './components';
 
 const navLinks = [
@@ -196,6 +196,11 @@ const App: React.FC = () => {
               <Route path="/admin/portfolio" element={
                   <ProtectedRoute>
                       <PortfolioManagementPage />
+                  </ProtectedRoute>
+              }/>
+              <Route path="/admin/export" element={
+                  <ProtectedRoute>
+                      <CustomerDataExportPage />
                   </ProtectedRoute>
               }/>
             </Routes>
