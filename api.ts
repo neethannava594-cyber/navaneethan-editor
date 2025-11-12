@@ -535,6 +535,30 @@ export const apiGetAllEnquiries = async () => {
     }
 };
 
+// Update enquiry status and notes
+export const apiUpdateEnquiry = async (enquiryId: string, updateData: { status?: string; admin_notes?: string }) => {
+    try {
+        console.log('📝 Updating enquiry:', enquiryId);
+
+        const { data, error } = await supabase
+            .from('enquiries')
+            .update(updateData)
+            .eq('id', enquiryId)
+            .select();
+
+        if (error) {
+            console.error('❌ Error updating enquiry:', error.message);
+            throw error;
+        }
+
+        console.log('✅ Enquiry updated successfully');
+        return data?.[0] || null;
+    } catch (error) {
+        console.error('❌ Failed to update enquiry:', error);
+        throw error;
+    }
+};
+
 // Helper function to generate CSV format
 const generateCSV = (data: any[], headers: string[]) => {
     if (!data || data.length === 0) return headers.join(',') + '\n';

@@ -1800,3 +1800,266 @@ export const CodeShowcasePage: React.FC = () => {
         </div>
     );
 };
+
+// Enquiries Management Page
+export const EnquiriesPage: React.FC = () => {
+    const [enquiries, setEnquiries] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [filterStatus, setFilterStatus] = useState<string>('all');
+    const [selectedEnquiry, setSelectedEnquiry] = useState<any>(null);
+    const [editingNotes, setEditingNotes] = useState<string>('');
+    const [editingStatus, setEditingStatus] = useState<string>('');
+
+    useEffect(() => {
+        const fetchEnquiries = async () => {
+            try {
+                setLoading(true);
+                const { apiGetAllEnquiries } = await import('./api');
+                const data = await apiGetAllEnquiries();
+                setEnquiries(data || []);
+            } catch (error) {
+                console.error('Failed to fetch enquiries:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchEnquiries();
+    }, []);
+
+    const filteredEnquiries = enquiries.filter(enquiry => {
+        const matchesSearch = 
+            enquiry.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            enquiry.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            enquiry.message?.toLowerCase().includes(searchTerm.toLowerCase());
+        
+        const matchesStatus = filterStatus === 'all' || enquiry.status === filterStatus;
+        
+        return matchesSearch && matchesStatus;
+    });
+
+    const handleSelectEnquiry = (enquiry: any) => {
+        setSelectedEnquiry(enquiry);
+        setEditingNotes(enquiry.admin_notes || '');
+        setEditingStatus(enquiry.status || 'new');
+    };
+
+    const handleUpdateEnquiry = async () => {
+        if (!selectedEnquiry) return;
+        try {
+            const { apiUpdateEnquiry } = await import('./api');
+            await apiUpdateEnquiry(selectedEnquiry.id, {
+                status: editingStatus,
+                admin_notes: editingNotes
+            });
+            
+            // Update local state
+            setEnquiries(enquiries.map(e => 
+                e.id === selectedEnquiry.id 
+                    ? { ...e, status: editingStatus, admin_notes: editingNotes }
+                    : e
+            ));
+            
+            setSelectedEnquiry(null);
+        } catch (error) {
+            console.error('Failed to update enquiry:', error);
+        }
+    };
+
+    const getStatusColor = (status: string) => {
+        switch(status) {
+            case 'new': return 'bg-blue-900/30 text-blue-300 border-blue-700';
+            case 'contacted': return 'bg-yellow-900/30 text-yellow-300 border-yellow-700';
+            case 'completed': return 'bg-green-900/30 text-green-300 border-green-700';
+            default: return 'bg-gray-900/30 text-gray-300 border-gray-700';
+        }
+    };
+
+    if (loading) {
+        return (
+            <div className="flex justify-center items-center h-screen">
+                <LoadingSpinner />
+            </div>
+        );
+    }
+
+    return (
+        <div className="container mx-auto px-4 py-12">
+            <SectionTitle title="Customer Enquiries" subtitle={`${filteredEnquiries.length} enquiries`} />
+
+            {/* Search and Filter */}
+            <div className="mb-8 space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <input
+                        type="text"
+                        placeholder="Search by name, email or message..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="px-4 py-2 bg-brand-surface border border-gray-700 rounded-lg text-brand-text placeholder-gray-500 focus:outline-none focus:border-brand-gold"
+                    />
+                    <select
+                        value={filterStatus}
+                        onChange={(e) => setFilterStatus(e.target.value)}
+                        className="px-4 py-2 bg-brand-surface border border-gray-700 rounded-lg text-brand-text focus:outline-none focus:border-brand-gold"
+                    >
+                        <option value="all">All Status</option>
+                        <option value="new">New</option>
+                        <option value="contacted">Contacted</option>
+                        <option value="completed">Completed</option>
+                    </select>
+                </div>
+            </div>
+
+            {/* Enquiries Table */}
+            <div className="bg-brand-surface/50 border border-gray-800 rounded-lg overflow-hidden">
+                <div className="overflow-x-auto">
+                    <table className="w-full text-sm text-gray-300">
+                        <thead className="bg-brand-surface border-b border-gray-800">
+                            <tr>
+                                <th className="px-6 py-3 text-left font-semibold text-brand-gold">Name</th>
+                                <th className="px-6 py-3 text-left font-semibold text-brand-gold">Email</th>
+                                <th className="px-6 py-3 text-left font-semibold text-brand-gold">Service</th>
+                                <th className="px-6 py-3 text-left font-semibold text-brand-gold">Status</th>
+                                <th className="px-6 py-3 text-left font-semibold text-brand-gold">Date</th>
+                                <th className="px-6 py-3 text-center font-semibold text-brand-gold">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-800">
+                            {filteredEnquiries.length > 0 ? (
+                                filteredEnquiries.map((enquiry) => (
+                                    <tr key={enquiry.id} className="hover:bg-brand-surface/80 transition-colors">
+                                        <td className="px-6 py-4 font-medium">{enquiry.name || 'N/A'}</td>
+                                        <td className="px-6 py-4 text-brand-gold">{enquiry.email || 'N/A'}</td>
+                                        <td className="px-6 py-4">{enquiry.service_interest || 'General'}</td>
+                                        <td className="px-6 py-4">
+                                            <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${getStatusColor(enquiry.status)}`}>
+                                                {enquiry.status?.charAt(0).toUpperCase() + enquiry.status?.slice(1) || 'New'}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            {new Date(enquiry.created_at).toLocaleDateString()}
+                                        </td>
+                                        <td className="px-6 py-4 text-center">
+                                            <Button 
+                                                onClick={() => handleSelectEnquiry(enquiry)}
+                                                variant="secondary"
+                                                className="text-xs py-1 px-3"
+                                            >
+                                                View Details
+                                            </Button>
+                                        </td>
+                                    </tr>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
+                                        No enquiries found
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            {/* Details Modal */}
+            {selectedEnquiry && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="bg-brand-surface border border-gray-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                        <div className="p-6 border-b border-gray-800 sticky top-0 bg-brand-surface">
+                            <h2 className="text-2xl font-bold text-brand-gold">Enquiry Details</h2>
+                            <button
+                                onClick={() => setSelectedEnquiry(null)}
+                                className="absolute top-6 right-6 text-gray-400 hover:text-gray-200"
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        <div className="p-6 space-y-6">
+                            {/* Customer Info */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label className="text-gray-400 text-sm">Name</label>
+                                    <p className="text-brand-text font-semibold text-lg mt-1">{selectedEnquiry.name || 'N/A'}</p>
+                                </div>
+                                <div>
+                                    <label className="text-gray-400 text-sm">Email</label>
+                                    <p className="text-brand-gold font-semibold text-lg mt-1">{selectedEnquiry.email || 'N/A'}</p>
+                                </div>
+                                <div>
+                                    <label className="text-gray-400 text-sm">Phone</label>
+                                    <p className="text-brand-text font-semibold text-lg mt-1">{selectedEnquiry.phone || 'N/A'}</p>
+                                </div>
+                                <div>
+                                    <label className="text-gray-400 text-sm">Service Interest</label>
+                                    <p className="text-brand-text font-semibold text-lg mt-1">{selectedEnquiry.service_interest || 'General'}</p>
+                                </div>
+                                <div>
+                                    <label className="text-gray-400 text-sm">Date Submitted</label>
+                                    <p className="text-brand-text font-semibold text-lg mt-1">
+                                        {new Date(selectedEnquiry.created_at).toLocaleDateString()} {new Date(selectedEnquiry.created_at).toLocaleTimeString()}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Message */}
+                            <div>
+                                <label className="text-gray-400 text-sm">Message</label>
+                                <div className="bg-brand-surface/50 border border-gray-700 rounded-lg p-4 mt-2 max-h-48 overflow-y-auto">
+                                    <p className="text-brand-text whitespace-pre-wrap">{selectedEnquiry.message || 'No message'}</p>
+                                </div>
+                            </div>
+
+                            {/* Status Update */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-brand-surface/50 border border-gray-800 rounded-lg p-4">
+                                <div>
+                                    <label className="text-gray-400 text-sm block mb-2">Status</label>
+                                    <select
+                                        value={editingStatus}
+                                        onChange={(e) => setEditingStatus(e.target.value)}
+                                        className="w-full px-4 py-2 bg-brand-surface border border-gray-700 rounded-lg text-brand-text focus:outline-none focus:border-brand-gold"
+                                    >
+                                        <option value="new">New</option>
+                                        <option value="contacted">Contacted</option>
+                                        <option value="completed">Completed</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            {/* Admin Notes */}
+                            <div>
+                                <label className="text-gray-400 text-sm block mb-2">Admin Notes</label>
+                                <textarea
+                                    value={editingNotes}
+                                    onChange={(e) => setEditingNotes(e.target.value)}
+                                    placeholder="Add internal notes about this enquiry..."
+                                    className="w-full px-4 py-3 bg-brand-surface border border-gray-700 rounded-lg text-brand-text placeholder-gray-500 focus:outline-none focus:border-brand-gold resize-none"
+                                    rows={4}
+                                />
+                            </div>
+
+                            {/* Action Buttons */}
+                            <div className="flex gap-4 pt-4">
+                                <Button 
+                                    onClick={handleUpdateEnquiry}
+                                    variant="primary"
+                                    className="flex-1"
+                                >
+                                    Save Changes
+                                </Button>
+                                <Button 
+                                    onClick={() => setSelectedEnquiry(null)}
+                                    variant="secondary"
+                                    className="flex-1"
+                                >
+                                    Close
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
