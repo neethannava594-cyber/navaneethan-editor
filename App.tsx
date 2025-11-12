@@ -1,5 +1,5 @@
 import React, { ReactNode } from 'react';
-import { HashRouter, Routes, Route, Link, NavLink, useLocation, Navigate } from 'react-router-dom';
+import { HashRouter, Routes, Route, Link, NavLink, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './AuthContext';
 import { HomePage, PortfolioPage, PricingPage, AboutPage, ContactPage, LoginPage, SignupPage, DashboardPage, OrderDetailPage, PortfolioManagementPage, CheckoutPage, CustomerDataExportPage, UpdateTrackingPage, CodeShowcasePage } from './pages';
 import { Logo, Button, TwitterIcon, InstagramIcon, LinkedInIcon, ErrorBoundary } from './components';
@@ -16,11 +16,25 @@ const navLinks = [
 const Navbar: React.FC = () => {
     const { currentUser, logout } = useAuth();
     const location = useLocation();
+    const navigate = useNavigate();
     const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
 
     React.useEffect(() => {
         setMobileMenuOpen(false);
     }, [location.pathname]);
+
+    const handleLogout = async () => {
+        await logout();
+        navigate('/login', { replace: true });
+    };
+
+    const handleDashboardClick = () => {
+        navigate('/dashboard');
+    };
+
+    const handleLoginClick = () => {
+        navigate('/login');
+    };
 
     return (
         <header className="sticky top-0 bg-brand-surface/70 backdrop-blur-md z-50 border-b border-gray-800">
@@ -46,11 +60,11 @@ const Navbar: React.FC = () => {
                 <div className="hidden md:flex items-center space-x-4">
                     {currentUser ? (
                         <>
-                            <Button onClick={() => location.pathname !== '/dashboard' && window.location.assign('#/dashboard')} variant="secondary" className="text-sm">Dashboard</Button>
-                            <Button onClick={logout} variant="primary" className="text-sm">Logout</Button>
+                            <Button onClick={handleDashboardClick} variant="secondary" className="text-sm">Dashboard</Button>
+                            <Button onClick={handleLogout} variant="primary" className="text-sm">Logout</Button>
                         </>
                     ) : (
-                        <Button onClick={() => window.location.assign('#/login')} variant="primary" className="text-sm">Login</Button>
+                        <Button onClick={handleLoginClick} variant="primary" className="text-sm">Login</Button>
                     )}
                 </div>
 
@@ -87,11 +101,11 @@ const Navbar: React.FC = () => {
                     <div className="border-t border-gray-700 pt-3 space-y-2">
                         {currentUser ? (
                             <>
-                                <Button onClick={() => { setMobileMenuOpen(false); window.location.assign('#/dashboard'); }} variant="secondary" className="w-full text-sm">Dashboard</Button>
-                                <Button onClick={() => { setMobileMenuOpen(false); logout(); }} variant="primary" className="w-full text-sm">Logout</Button>
+                                <Button onClick={() => { setMobileMenuOpen(false); handleDashboardClick(); }} variant="secondary" className="w-full text-sm">Dashboard</Button>
+                                <Button onClick={() => { setMobileMenuOpen(false); handleLogout(); }} variant="primary" className="w-full text-sm">Logout</Button>
                             </>
                         ) : (
-                            <Button onClick={() => { setMobileMenuOpen(false); window.location.assign('#/login'); }} variant="primary" className="w-full text-sm">Login</Button>
+                            <Button onClick={() => { setMobileMenuOpen(false); handleLoginClick(); }} variant="primary" className="w-full text-sm">Login</Button>
                         )}
                     </div>
                 </div>

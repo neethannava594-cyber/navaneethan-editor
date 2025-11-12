@@ -98,8 +98,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       
       await supabase.auth.signOut();
       setCurrentUser(null);
-      window.location.hash = '/login';
-      window.location.reload();
     } catch (error) {
       console.error("Logout failed:", error);
     }
@@ -137,7 +135,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     signup,
   };
 
-  return <AuthContext.Provider value={value}>{!loading && children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = () => {

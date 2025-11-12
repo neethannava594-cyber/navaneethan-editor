@@ -454,11 +454,13 @@ export const LoginPage: React.FC = () => {
         e.preventDefault();
         setError('');
         setShowError(false);
+        setShowSuccess(false);
         const user = await login(email, password);
         if (user) {
             setShowSuccess(true);
+            // Use setTimeout to allow success message to display before navigation
             setTimeout(() => {
-                navigate('/dashboard');
+                navigate('/dashboard', { replace: true });
             }, 1500);
         } else {
             setError('Invalid credentials. Please check your email and password.');
@@ -556,7 +558,7 @@ export const SignupPage: React.FC = () => {
             setSuccess('✅ Account created successfully! Redirecting to dashboard...');
             setShowSuccess(true);
             setTimeout(() => {
-                navigate('/dashboard');
+                navigate('/dashboard', { replace: true });
             }, 1500);
         } else {
             setError('❌ Signup failed. Please try again or use a different email.');
