@@ -535,6 +535,27 @@ export const apiGetAllEnquiries = async () => {
     }
 };
 
+// Helper function to generate CSV format
+const generateCSV = (data: any[], headers: string[]) => {
+    if (!data || data.length === 0) return headers.join(',') + '\n';
+    
+    const csvRows = [headers.join(',')];
+    data.forEach(row => {
+        const values = headers.map(header => {
+            const value = row[header];
+            // Escape quotes and wrap in quotes if contains comma
+            if (value === null || value === undefined) return '';
+            const stringValue = String(value);
+            if (stringValue.includes(',') || stringValue.includes('"')) {
+                return '"' + stringValue.replace(/"/g, '""') + '"';
+            }
+            return stringValue;
+        });
+        csvRows.push(values.join(','));
+    });
+    return csvRows.join('\n');
+};
+
 // Export customer data and enquiries to Excel
 export const apiExportToExcel = async () => {
     try {
@@ -552,27 +573,6 @@ export const apiExportToExcel = async () => {
             enquiries,
             orders,
             signInLogs
-        };
-
-        // Convert to CSV format (Excel can read this)
-        const generateCSV = (data: any[], headers: string[]) => {
-            if (!data || data.length === 0) return headers.join(',') + '\n';
-            
-            const csvRows = [headers.join(',')];
-            data.forEach(row => {
-                const values = headers.map(header => {
-                    const value = row[header];
-                    // Escape quotes and wrap in quotes if contains comma
-                    if (value === null || value === undefined) return '';
-                    const stringValue = String(value);
-                    if (stringValue.includes(',') || stringValue.includes('"')) {
-                        return '"' + stringValue.replace(/"/g, '""') + '"';
-                    }
-                    return stringValue;
-                });
-                csvRows.push(values.join(','));
-            });
-            return csvRows.join('\n');
         };
 
         // Prepare data for export
@@ -673,6 +673,201 @@ export const downloadExcelFile = async (filename: string = 'customer-data.xlsx')
         return { success: true, filename: finalFilename };
     } catch (error) {
         console.error('❌ Failed to download Excel file:', error);
+        throw error;
+    }
+};
+
+// --- Customer Audit Logging & Tracking ---
+
+// Get all audit logs for tracking customer updates
+export const apiGetAuditLogs = async (recordType?: string, limit: number = 100) => {
+    try {
+        console.log('🔵 Fetching customer audit logs...');
+        let query = supabase
+            .from('customer_audit_logs')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(limit);
+
+        if (recordType) {
+            query = query.eq('record_type', recordType);
+        }
+
+        const { data, error } = await query;
+
+        if (error) {
+            console.error('❌ Error fetching audit logs:', error.message);
+            throw error;
+        }
+
+        console.log('✅ Fetched', data?.length || 0, 'audit logs');
+        return data || [];
+    } catch (error) {
+        console.error('❌ Failed to fetch audit logs:', error);
+        throw error;
+    }
+};
+
+// Get audit history for a specific record
+export const apiGetRecordHistory = async (recordType: string, recordId: number) => {
+    try {
+        console.log(`🔵 Fetching history for ${recordType} #${recordId}...`);
+        
+        const { data, error } = await supabase
+            .from('customer_audit_logs')
+            .select('*')
+            .eq('record_type', recordType)
+            .eq('record_id', recordId)
+            .order('created_at', { ascending: true });
+
+        if (error) {
+            console.error('❌ Error fetching record history:', error.message);
+            throw error;
+        }
+
+        console.log('✅ Fetched', data?.length || 0, 'history records');
+        return data || [];
+    } catch (error) {
+        console.error('❌ Failed to fetch record history:', error);
+        throw error;
+    }
+};
+
+// Get recent changes summary
+export const apiGetRecentChanges = async (hoursBack: number = 24) => {
+    try {
+        console.log(`🔵 Fetching changes from last ${hoursBack} hours...`);
+        
+        const cutoffTime = new Date(Date.now() - hoursBack * 60 * 60 * 1000).toISOString();
+        
+        const { data, error } = await supabase
+            .from('customer_audit_logs')
+            .select('*')
+            .gte('created_at', cutoffTime)
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            console.error('❌ Error fetching recent changes:', error.message);
+            throw error;
+        }
+
+        // Group by record type
+        const grouped = {
+            enquiries: [],
+            orders: [],
+            signin_logs: []
+        };
+
+        data?.forEach(log => {
+            if (log.record_type === 'enquiry') grouped.enquiries.push(log);
+            else if (log.record_type === 'order') grouped.orders.push(log);
+            else if (log.record_type === 'signin_log') grouped.signin_logs.push(log);
+        });
+
+        console.log('✅ Fetched recent changes:', {
+            enquiries: grouped.enquiries.length,
+            orders: grouped.orders.length,
+            signin_logs: grouped.signin_logs.length
+        });
+
+        return grouped;
+    } catch (error) {
+        console.error('❌ Failed to fetch recent changes:', error);
+        throw error;
+    }
+};
+
+// Export audit logs to Excel
+export const apiExportAuditLogsToExcel = async (recordType?: string) => {
+    try {
+        console.log('🔵 Preparing audit logs for export...');
+
+        // Fetch audit logs
+        const auditLogs = await apiGetAuditLogs(recordType, 10000);
+
+        if (!auditLogs || auditLogs.length === 0) {
+            console.log('⚠️ No audit logs found');
+            return {
+                success: false,
+                message: 'No audit logs found',
+                auditCSV: ''
+            };
+        }
+
+        // Prepare CSV data
+        const auditHeaders = [
+            'Log ID',
+            'Record Type',
+            'Record ID',
+            'Field Changed',
+            'Old Value',
+            'New Value',
+            'Change Type',
+            'Changed By',
+            'Changed At',
+            'Change Date'
+        ];
+
+        const auditData = auditLogs.map(log => ({
+            'Log ID': log.id,
+            'Record Type': log.record_type.toUpperCase(),
+            'Record ID': log.record_id,
+            'Field Changed': log.field_name,
+            'Old Value': (log.old_value || '').substring(0, 100),
+            'New Value': (log.new_value || '').substring(0, 100),
+            'Change Type': log.change_type,
+            'Changed By': log.changed_by_email || 'System',
+            'Changed At': log.created_at,
+            'Change Date': new Date(log.created_at).toLocaleDateString()
+        }));
+
+        // Generate CSV
+        const auditCSV = generateCSV(auditData, auditHeaders);
+
+        console.log('✅ Audit data prepared for export');
+        return {
+            success: true,
+            auditCSV,
+            count: auditLogs.length,
+            recordType: recordType || 'All'
+        };
+    } catch (error) {
+        console.error('❌ Failed to export audit logs:', error);
+        throw error;
+    }
+};
+
+// Download audit logs as Excel
+export const downloadAuditLogsExcel = async (filename: string = 'customer-update-history.xlsx') => {
+    try {
+        console.log('📥 Downloading audit logs...');
+
+        const exportData = await apiExportAuditLogsToExcel();
+
+        if (!exportData.success) {
+            console.error('❌ No audit data to export');
+            throw new Error(exportData.message);
+        }
+
+        const timestamp = new Date().toISOString().split('T')[0];
+        const finalFilename = `${filename.replace('.xlsx', '')}-${timestamp}.xlsx`;
+
+        // Create blob
+        const blob = new Blob([exportData.auditCSV], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+
+        link.setAttribute('href', url);
+        link.setAttribute('download', finalFilename);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        console.log('✅ Audit logs downloaded:', finalFilename);
+        return { success: true, filename: finalFilename, count: exportData.count };
+    } catch (error) {
+        console.error('❌ Failed to download audit logs:', error);
         throw error;
     }
 };

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from './AuthContext';
-import { apiGetAllOrders, apiGetMyOrders, apiGetOrderById, apiGetPortfolio, apiGetServices, apiGetTestimonials, apiSubmitContactForm, apiUpdateOrder, apiAddPortfolioVideo, apiDeletePortfolioVideo, apiCreateOrder, apiExportToExcel, downloadExcelFile } from './api';
+import { apiGetAllOrders, apiGetMyOrders, apiGetOrderById, apiGetPortfolio, apiGetServices, apiGetTestimonials, apiSubmitContactForm, apiUpdateOrder, apiAddPortfolioVideo, apiDeletePortfolioVideo, apiCreateOrder, apiExportToExcel, downloadExcelFile, apiGetAuditLogs, apiGetRecentChanges, downloadAuditLogsExcel } from './api';
 import { Button, LoadingSpinner, OrderCard, OrderStatusBadge, PortfolioCard, PricingCard, SectionTitle, TestimonialCard, VideoCameraIcon, FaceAwareImage } from './components';
 import { Order, OrderStatus, PortfolioVideo, PricingPackage, Testimonial } from './types';
 import { profileData } from './profileData';
@@ -1260,6 +1260,300 @@ export const CustomerDataExportPage: React.FC = () => {
                         <div>✅ Easy to analyze</div>
                         <div>✅ One-click download</div>
                         <div>✅ Timestamped files</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// Customer Update Tracking Page - Track all customer data changes in real-time
+export const UpdateTrackingPage: React.FC = () => {
+    const { user } = useAuth();
+    const navigate = useNavigate();
+    const [recentChanges, setRecentChanges] = useState<any>(null);
+    const [auditLogs, setAuditLogs] = useState<any[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string>('');
+    const [success, setSuccess] = useState<string>('');
+    const [selectedType, setSelectedType] = useState<string>('all');
+    const [autoRefresh, setAutoRefresh] = useState(true);
+
+    // Redirect if not authenticated
+    if (!user) {
+        navigate('/');
+        return null;
+    }
+
+    useEffect(() => {
+        // Initial load
+        handleLoadChanges();
+
+        // Set up auto-refresh every 30 seconds
+        if (autoRefresh) {
+            const interval = setInterval(() => {
+                handleLoadChanges();
+            }, 30000);
+            return () => clearInterval(interval);
+        }
+    }, [autoRefresh]);
+
+    const handleLoadChanges = async () => {
+        try {
+            setLoading(true);
+            setError('');
+
+            // Get recent changes
+            const changes = await apiGetRecentChanges(24);
+            setRecentChanges(changes);
+
+            // Get all audit logs
+            const logs = await apiGetAuditLogs(selectedType === 'all' ? undefined : selectedType, 50);
+            setAuditLogs(logs);
+
+            console.log('✅ Update tracking data loaded');
+        } catch (err: any) {
+            setError(err.message || 'Failed to load tracking data');
+            console.error('❌ Error loading tracking data:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleDownloadTracking = async () => {
+        try {
+            setLoading(true);
+            setError('');
+            setSuccess('');
+
+            const result = await downloadAuditLogsExcel('customer-update-history');
+            setSuccess(`✅ Downloaded ${result.count} tracking records!`);
+        } catch (err: any) {
+            setError(err.message || 'Failed to download tracking data');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const formatDate = (dateString: string) => {
+        return new Date(dateString).toLocaleString();
+    };
+
+    const getChangeTypeColor = (type: string) => {
+        switch (type) {
+            case 'CREATE': return 'bg-green-900/30 border-green-600';
+            case 'UPDATE': return 'bg-blue-900/30 border-blue-600';
+            case 'DELETE': return 'bg-red-900/30 border-red-600';
+            default: return 'bg-gray-900/30 border-gray-600';
+        }
+    };
+
+    const getRecordTypeIcon = (type: string) => {
+        switch (type) {
+            case 'enquiry': return '📨';
+            case 'order': return '📦';
+            case 'signin_log': return '🔐';
+            default: return '📝';
+        }
+    };
+
+    return (
+        <div className="min-h-screen bg-gradient-to-br from-gray-900 via-slate-900 to-gray-900 text-white py-12 px-4 sm:px-6 lg:px-8">
+            <div className="max-w-7xl mx-auto">
+                {/* Header */}
+                <div className="mb-12">
+                    <h1 className="text-5xl font-bold bg-gradient-to-r from-brand-gold to-yellow-400 bg-clip-text text-transparent mb-4">
+                        📊 Customer Update Tracking
+                    </h1>
+                    <p className="text-xl text-gray-300">
+                        Real-time tracking of all customer data changes and updates
+                    </p>
+                </div>
+
+                {/* Success Message */}
+                {success && (
+                    <div className="mb-6 p-4 bg-green-900/30 border-l-4 border-green-500 text-green-200 rounded">
+                        {success}
+                    </div>
+                )}
+
+                {/* Error Message */}
+                {error && (
+                    <div className="mb-6 p-4 bg-red-900/30 border-l-4 border-red-500 text-red-200 rounded">
+                        {error}
+                    </div>
+                )}
+
+                {/* Controls */}
+                <div className="mb-8 bg-gray-800/40 border border-gray-700 rounded-lg p-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                        <div>
+                            <label className="block text-sm font-medium mb-2 text-gray-300">Filter by Type:</label>
+                            <select
+                                value={selectedType}
+                                onChange={(e) => {
+                                    setSelectedType(e.target.value);
+                                    handleLoadChanges();
+                                }}
+                                className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded text-white focus:outline-none focus:border-brand-gold"
+                            >
+                                <option value="all">All Changes</option>
+                                <option value="enquiry">Enquiries Only</option>
+                                <option value="order">Orders Only</option>
+                                <option value="signin_log">Sign-in Logs Only</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="flex items-center gap-2 text-gray-300 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={autoRefresh}
+                                    onChange={(e) => setAutoRefresh(e.target.checked)}
+                                    className="w-4 h-4"
+                                />
+                                <span>Auto-refresh (30s)</span>
+                            </label>
+                        </div>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={handleLoadChanges}
+                                disabled={loading}
+                                className="flex-1 px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-medium disabled:opacity-50"
+                            >
+                                {loading ? '🔄 Loading...' : '🔄 Refresh'}
+                            </button>
+                            <button
+                                onClick={handleDownloadTracking}
+                                disabled={loading}
+                                className="flex-1 px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded font-medium disabled:opacity-50"
+                            >
+                                {loading ? '⬇️ Downloading...' : '⬇️ Download History'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Summary Stats */}
+                {recentChanges && (
+                    <div className="mb-8 grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="bg-gradient-to-br from-green-900/40 to-green-800/20 border border-green-600 rounded-lg p-6">
+                            <div className="text-4xl font-bold text-green-400 mb-2">{recentChanges.enquiries?.length || 0}</div>
+                            <div className="text-green-300">Enquiry Changes (24h)</div>
+                        </div>
+                        <div className="bg-gradient-to-br from-blue-900/40 to-blue-800/20 border border-blue-600 rounded-lg p-6">
+                            <div className="text-4xl font-bold text-blue-400 mb-2">{recentChanges.orders?.length || 0}</div>
+                            <div className="text-blue-300">Order Changes (24h)</div>
+                        </div>
+                        <div className="bg-gradient-to-br from-purple-900/40 to-purple-800/20 border border-purple-600 rounded-lg p-6">
+                            <div className="text-4xl font-bold text-purple-400 mb-2">{recentChanges.signin_logs?.length || 0}</div>
+                            <div className="text-purple-300">Sign-in Changes (24h)</div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Audit Logs List */}
+                <div className="bg-gray-800/30 border border-gray-700 rounded-lg overflow-hidden">
+                    <div className="bg-gradient-to-r from-brand-gold/10 to-yellow-400/10 border-b border-gray-700 px-6 py-4">
+                        <h2 className="text-2xl font-bold">
+                            📝 Recent Updates
+                            {auditLogs.length > 0 && <span className="text-lg text-gray-400 ml-2">({auditLogs.length})</span>}
+                        </h2>
+                    </div>
+
+                    {loading ? (
+                        <div className="p-8 text-center">
+                            <LoadingSpinner />
+                            <p className="mt-4 text-gray-300">Loading tracking data...</p>
+                        </div>
+                    ) : auditLogs.length === 0 ? (
+                        <div className="p-8 text-center text-gray-400">
+                            <div className="text-4xl mb-2">📭</div>
+                            <p>No updates found for this period</p>
+                        </div>
+                    ) : (
+                        <div className="divide-y divide-gray-700 max-h-96 overflow-y-auto">
+                            {auditLogs.map((log) => (
+                                <div key={log.id} className={`p-4 border-l-4 transition-colors ${getChangeTypeColor(log.change_type)}`}>
+                                    <div className="flex items-start justify-between mb-2">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-2xl">{getRecordTypeIcon(log.record_type)}</span>
+                                            <div>
+                                                <div className="font-semibold text-white">
+                                                    {log.record_type.toUpperCase()} #{log.record_id}
+                                                </div>
+                                                <div className="text-sm text-gray-400">
+                                                    {log.change_type} • {log.field_name} by {log.changed_by_email || 'system'}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="text-xs text-gray-400">
+                                            {formatDate(log.created_at)}
+                                        </div>
+                                    </div>
+
+                                    {log.old_value && (
+                                        <div className="text-sm text-gray-400 ml-10 mt-2">
+                                            <span className="text-red-400">Before:</span> {log.old_value}
+                                        </div>
+                                    )}
+                                    {log.new_value && (
+                                        <div className="text-sm text-gray-400 ml-10">
+                                            <span className="text-green-400">After:</span> {log.new_value}
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                {/* Info Section */}
+                <div className="mt-12 bg-gradient-to-r from-brand-gold/10 to-yellow-400/10 border-2 border-brand-gold/30 rounded-lg p-6">
+                    <h2 className="text-2xl font-bold text-brand-text mb-4">🎯 What's Tracked?</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-gray-300">
+                        <div className="flex gap-3">
+                            <span className="text-xl">✓</span>
+                            <div>
+                                <div className="font-semibold text-white">Customer Enquiries</div>
+                                <div className="text-sm">Name, email, status changes</div>
+                            </div>
+                        </div>
+                        <div className="flex gap-3">
+                            <span className="text-xl">✓</span>
+                            <div>
+                                <div className="font-semibold text-white">Customer Orders</div>
+                                <div className="text-sm">Status, price, notes updates</div>
+                            </div>
+                        </div>
+                        <div className="flex gap-3">
+                            <span className="text-xl">✓</span>
+                            <div>
+                                <div className="font-semibold text-white">Sign-in Activity</div>
+                                <div className="text-sm">Login/logout events</div>
+                            </div>
+                        </div>
+                        <div className="flex gap-3">
+                            <span className="text-xl">✓</span>
+                            <div>
+                                <div className="font-semibold text-white">Full History</div>
+                                <div className="text-sm">Before/after values, timestamps</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Features */}
+                <div className="mt-8 bg-gradient-to-r from-blue-900/20 to-purple-900/20 border-2 border-blue-600/30 rounded-lg p-6">
+                    <h2 className="text-2xl font-bold text-brand-text mb-6">✨ Features</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-gray-300">
+                        <div>✅ Real-time tracking</div>
+                        <div>✅ Auto-refresh every 30s</div>
+                        <div>✅ Filter by type</div>
+                        <div>✅ Download full history</div>
+                        <div>✅ Before/after values</div>
+                        <div>✅ Timestamp tracking</div>
+                        <div>✅ User identification</div>
+                        <div>✅ Excel export</div>
                     </div>
                 </div>
             </div>
