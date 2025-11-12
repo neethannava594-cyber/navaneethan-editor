@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 import { apiGetAllOrders, apiGetMyOrders, apiGetOrderById, apiGetPortfolio, apiGetServices, apiGetTestimonials, apiSubmitContactForm, apiUpdateOrder, apiAddPortfolioVideo, apiDeletePortfolioVideo, apiCreateOrder, apiExportToExcel, downloadExcelFile, apiGetAuditLogs, apiGetRecentChanges, downloadAuditLogsExcel } from './api';
 import { Button, LoadingSpinner, OrderCard, OrderStatusBadge, PortfolioCard, PricingCard, SectionTitle, TestimonialCard, VideoCameraIcon, FaceAwareImage } from './components';
+import { codeExamples, CodeExample } from './codeExamples';
 import { Order, OrderStatus, PortfolioVideo, PricingPackage, Testimonial } from './types';
 import { profileData } from './profileData';
 
@@ -1554,6 +1555,243 @@ export const UpdateTrackingPage: React.FC = () => {
                         <div>✅ Timestamp tracking</div>
                         <div>✅ User identification</div>
                         <div>✅ Excel export</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// Professional Code Showcase Page - Display coding expertise across multiple languages
+export const CodeShowcasePage: React.FC = () => {
+    const [selectedExample, setSelectedExample] = useState<CodeExample | null>(codeExamples[0]);
+    const [selectedLanguage, setSelectedLanguage] = useState<string>('All');
+    const [copied, setCopied] = useState(false);
+
+    const languages = ['All', 'JavaScript', 'TypeScript', 'Python', 'Java'];
+    const filteredExamples = selectedLanguage === 'All' 
+        ? codeExamples 
+        : codeExamples.filter(ex => ex.language === selectedLanguage);
+
+    const handleCopyCode = () => {
+        if (selectedExample) {
+            navigator.clipboard.writeText(selectedExample.code);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        }
+    };
+
+    const getDifficultyColor = (difficulty: string) => {
+        switch (difficulty) {
+            case 'Beginner': return 'bg-green-900/30 text-green-300';
+            case 'Intermediate': return 'bg-yellow-900/30 text-yellow-300';
+            case 'Advanced': return 'bg-red-900/30 text-red-300';
+            default: return 'bg-gray-700';
+        }
+    };
+
+    const getLanguageColor = (language: string) => {
+        switch (language) {
+            case 'TypeScript': return '#3178C6';
+            case 'JavaScript': return '#F7DF1E';
+            case 'Python': return '#3776AB';
+            case 'Java': return '#007396';
+            default: return '#888888';
+        }
+    };
+
+    return (
+        <div className="min-h-screen bg-gradient-to-br from-gray-900 via-slate-900 to-gray-900 text-white py-12 px-4 sm:px-6 lg:px-8">
+            <div className="max-w-7xl mx-auto">
+                {/* Header */}
+                <div className="mb-12 text-center">
+                    <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent mb-4">
+                        💻 Professional Code Showcase
+                    </h1>
+                    <p className="text-xl text-gray-300 max-w-2xl mx-auto">
+                        Expertise across multiple programming languages with modern design patterns, best practices, and production-ready code examples.
+                    </p>
+                </div>
+
+                {/* Language Filter */}
+                <div className="mb-12 flex flex-wrap gap-3 justify-center">
+                    {languages.map(lang => (
+                        <button
+                            key={lang}
+                            onClick={() => setSelectedLanguage(lang)}
+                            className={`px-6 py-3 rounded-lg font-semibold transition-all ${
+                                selectedLanguage === lang
+                                    ? 'bg-blue-600 text-white shadow-lg'
+                                    : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                            }`}
+                        >
+                            {lang}
+                        </button>
+                    ))}
+                </div>
+
+                {/* Main Content */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
+                    {/* Code Examples List */}
+                    <div className="lg:col-span-1">
+                        <div className="bg-gray-800/40 border border-gray-700 rounded-lg overflow-hidden sticky top-4">
+                            <div className="bg-gradient-to-r from-blue-600 to-purple-600 px-6 py-4">
+                                <h2 className="text-lg font-bold">
+                                    📚 Code Examples {filteredExamples.length > 0 && `(${filteredExamples.length})`}
+                                </h2>
+                            </div>
+                            <div className="max-h-96 overflow-y-auto">
+                                {filteredExamples.map(example => (
+                                    <button
+                                        key={example.id}
+                                        onClick={() => setSelectedExample(example)}
+                                        className={`w-full text-left px-4 py-3 border-b border-gray-700 transition-colors ${
+                                            selectedExample?.id === example.id
+                                                ? 'bg-blue-900/40 border-l-4 border-l-blue-500'
+                                                : 'hover:bg-gray-700/30'
+                                        }`}
+                                    >
+                                        <div className="font-semibold text-sm">{example.title}</div>
+                                        <div className="text-xs text-gray-400 mt-1">{example.language}</div>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Code Display */}
+                    <div className="lg:col-span-2">
+                        {selectedExample ? (
+                            <div className="space-y-6">
+                                {/* Info Header */}
+                                <div className="bg-gray-800/40 border border-gray-700 rounded-lg p-6">
+                                    <div className="flex items-start justify-between mb-4">
+                                        <div>
+                                            <h3 className="text-2xl font-bold text-white mb-2">{selectedExample.title}</h3>
+                                            <p className="text-gray-300">{selectedExample.description}</p>
+                                        </div>
+                                        <div
+                                            className="w-12 h-12 rounded-lg flex items-center justify-center text-xl font-bold"
+                                            style={{ backgroundColor: getLanguageColor(selectedExample.language) + '20', color: getLanguageColor(selectedExample.language) }}
+                                        >
+                                            {selectedExample.language.substring(0, 2).toUpperCase()}
+                                        </div>
+                                    </div>
+                                    
+                                    {/* Tags and Difficulty */}
+                                    <div className="flex flex-wrap gap-2 items-center">
+                                        <span className={`px-3 py-1 rounded-full text-sm font-semibold ${getDifficultyColor(selectedExample.difficulty)}`}>
+                                            {selectedExample.difficulty}
+                                        </span>
+                                        <span className="text-gray-400 text-sm">•</span>
+                                        <span className="text-gray-400 text-sm">{selectedExample.category}</span>
+                                        {selectedExample.tags.map(tag => (
+                                            <span key={tag} className="px-3 py-1 bg-gray-700/50 text-gray-300 text-xs rounded-full">
+                                                {tag}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Code Block */}
+                                <div className="bg-gray-950 border border-gray-700 rounded-lg overflow-hidden">
+                                    <div className="bg-gray-800 px-6 py-4 flex items-center justify-between border-b border-gray-700">
+                                        <span className="text-sm font-mono text-gray-400">{selectedExample.language}</span>
+                                        <button
+                                            onClick={handleCopyCode}
+                                            className={`px-4 py-2 rounded text-sm font-semibold transition-colors ${
+                                                copied
+                                                    ? 'bg-green-600 text-white'
+                                                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                                            }`}
+                                        >
+                                            {copied ? '✓ Copied!' : '📋 Copy Code'}
+                                        </button>
+                                    </div>
+                                    <pre className="p-6 text-sm text-gray-300 overflow-x-auto max-h-96">
+                                        <code className="font-mono text-sm leading-relaxed">{selectedExample.code}</code>
+                                    </pre>
+                                </div>
+
+                                {/* Explanation */}
+                                <div className="bg-gradient-to-r from-blue-900/20 to-purple-900/20 border border-blue-500/30 rounded-lg p-6">
+                                    <h4 className="text-lg font-bold text-white mb-3">💡 Explanation</h4>
+                                    <p className="text-gray-300 leading-relaxed">{selectedExample.explanation}</p>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="text-center py-12 text-gray-400">
+                                <p>Select a code example to view details</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Statistics Section */}
+                <div className="mb-12">
+                    <h2 className="text-3xl font-bold text-white mb-8 text-center">📊 Expertise Overview</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div className="bg-gradient-to-br from-blue-900/30 to-blue-800/10 border border-blue-600/30 rounded-lg p-6 text-center">
+                            <div className="text-3xl font-bold text-blue-400 mb-2">{codeExamples.filter(e => e.language === 'TypeScript' || e.language === 'JavaScript').length}</div>
+                            <div className="text-gray-300">JavaScript / TypeScript</div>
+                            <div className="text-xs text-gray-500 mt-2">Frontend & React</div>
+                        </div>
+                        <div className="bg-gradient-to-br from-yellow-900/30 to-yellow-800/10 border border-yellow-600/30 rounded-lg p-6 text-center">
+                            <div className="text-3xl font-bold text-yellow-400 mb-2">{codeExamples.filter(e => e.language === 'Python').length}</div>
+                            <div className="text-gray-300">Python</div>
+                            <div className="text-xs text-gray-500 mt-2">Backend & ML</div>
+                        </div>
+                        <div className="bg-gradient-to-br from-red-900/30 to-red-800/10 border border-red-600/30 rounded-lg p-6 text-center">
+                            <div className="text-3xl font-bold text-red-400 mb-2">{codeExamples.filter(e => e.language === 'Java').length}</div>
+                            <div className="text-gray-300">Java</div>
+                            <div className="text-xs text-gray-500 mt-2">Enterprise & Patterns</div>
+                        </div>
+                        <div className="bg-gradient-to-br from-purple-900/30 to-purple-800/10 border border-purple-600/30 rounded-lg p-6 text-center">
+                            <div className="text-3xl font-bold text-purple-400 mb-2">{codeExamples.length}</div>
+                            <div className="text-gray-300">Total Examples</div>
+                            <div className="text-xs text-gray-500 mt-2">Production-Ready</div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Skills Section */}
+                <div className="bg-gradient-to-r from-brand-gold/10 to-yellow-400/10 border-2 border-brand-gold/30 rounded-lg p-8">
+                    <h2 className="text-3xl font-bold text-brand-text mb-8">🎯 Core Competencies</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <h3 className="text-lg font-semibold text-white mb-4">🔧 Languages & Frameworks</h3>
+                            <ul className="space-y-2 text-gray-300">
+                                <li className="flex items-center gap-2">
+                                    <span className="text-blue-400">✓</span> TypeScript & JavaScript (React, Node.js)
+                                </li>
+                                <li className="flex items-center gap-2">
+                                    <span className="text-yellow-400">✓</span> Python (Django, FastAPI, Async)
+                                </li>
+                                <li className="flex items-center gap-2">
+                                    <span className="text-red-400">✓</span> Java (Spring, Design Patterns)
+                                </li>
+                                <li className="flex items-center gap-2">
+                                    <span className="text-green-400">✓</span> SQL & Database Design
+                                </li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h3 className="text-lg font-semibold text-white mb-4">🏗️ Design Patterns & Architecture</h3>
+                            <ul className="space-y-2 text-gray-300">
+                                <li className="flex items-center gap-2">
+                                    <span className="text-purple-400">✓</span> Builder, Observer, Strategy Patterns
+                                </li>
+                                <li className="flex items-center gap-2">
+                                    <span className="text-purple-400">✓</span> Microservices & Event-Driven
+                                </li>
+                                <li className="flex items-center gap-2">
+                                    <span className="text-purple-400">✓</span> Async/Await & Reactive Programming
+                                </li>
+                                <li className="flex items-center gap-2">
+                                    <span className="text-purple-400">✓</span> Clean Code & SOLID Principles
+                                </li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </div>

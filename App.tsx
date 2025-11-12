@@ -1,12 +1,13 @@
 import React, { ReactNode } from 'react';
 import { HashRouter, Routes, Route, Link, NavLink, useLocation, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './AuthContext';
-import { HomePage, PortfolioPage, PricingPage, AboutPage, ContactPage, LoginPage, SignupPage, DashboardPage, OrderDetailPage, PortfolioManagementPage, CheckoutPage, CustomerDataExportPage, UpdateTrackingPage } from './pages';
+import { HomePage, PortfolioPage, PricingPage, AboutPage, ContactPage, LoginPage, SignupPage, DashboardPage, OrderDetailPage, PortfolioManagementPage, CheckoutPage, CustomerDataExportPage, UpdateTrackingPage, CodeShowcasePage } from './pages';
 import { Logo, Button, TwitterIcon, InstagramIcon, LinkedInIcon, ErrorBoundary } from './components';
 
 const navLinks = [
   { name: 'Home', path: '/' },
   { name: 'Portfolio', path: '/portfolio' },
+  { name: 'Code', path: '/code' },
   { name: 'Pricing', path: '/pricing' },
   { name: 'About', path: '/about' },
   { name: 'Contact', path: '/contact' },
@@ -173,6 +174,7 @@ const App: React.FC = () => {
             <Routes>
               <Route path="/" element={<HomePage />} />
               <Route path="/portfolio" element={<PortfolioPage />} />
+              <Route path="/code" element={<CodeShowcasePage />} />
               <Route path="/pricing" element={<PricingPage />} />
         <Route path="/checkout/:packageId" element={
           <ProtectedRoute>
