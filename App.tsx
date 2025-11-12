@@ -15,11 +15,18 @@ const navLinks = [
 const Navbar: React.FC = () => {
     const { currentUser, logout } = useAuth();
     const location = useLocation();
+    const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+
+    React.useEffect(() => {
+        setMobileMenuOpen(false);
+    }, [location.pathname]);
 
     return (
         <header className="sticky top-0 bg-brand-surface/70 backdrop-blur-md z-50 border-b border-gray-800">
             <nav className="container mx-auto px-4 py-4 flex justify-between items-center">
                 <Logo />
+                
+                {/* Desktop Navigation */}
                 <div className="hidden md:flex items-center space-x-8">
                     {navLinks.map(link => (
                         <NavLink 
@@ -33,17 +40,61 @@ const Navbar: React.FC = () => {
                         </NavLink>
                     ))}
                 </div>
-                <div className="flex items-center space-x-4">
+
+                {/* Desktop Buttons */}
+                <div className="hidden md:flex items-center space-x-4">
                     {currentUser ? (
                         <>
-                            <Button onClick={() => location.pathname !== '/dashboard' && window.location.assign('#/dashboard')} variant="secondary">Dashboard</Button>
-                            <Button onClick={logout} variant="primary">Logout</Button>
+                            <Button onClick={() => location.pathname !== '/dashboard' && window.location.assign('#/dashboard')} variant="secondary" className="text-sm">Dashboard</Button>
+                            <Button onClick={logout} variant="primary" className="text-sm">Logout</Button>
                         </>
                     ) : (
-                        <Button onClick={() => window.location.assign('#/login')} variant="primary">Login</Button>
+                        <Button onClick={() => window.location.assign('#/login')} variant="primary" className="text-sm">Login</Button>
                     )}
                 </div>
+
+                {/* Mobile Menu Button */}
+                <button
+                    onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                    className="md:hidden p-2 rounded-lg hover:bg-brand-gold/20 transition-colors"
+                    aria-label="Toggle menu"
+                >
+                    <svg className="h-6 w-6 text-brand-gold" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
+                        {mobileMenuOpen ? (
+                            <path d="M6 18L18 6M6 6l12 12"></path>
+                        ) : (
+                            <path d="M4 6h16M4 12h16M4 18h16"></path>
+                        )}
+                    </svg>
+                </button>
             </nav>
+
+            {/* Mobile Navigation Menu */}
+            {mobileMenuOpen && (
+                <div className="md:hidden bg-brand-surface/95 border-t border-gray-800 px-4 py-4 space-y-3">
+                    {navLinks.map(link => (
+                        <NavLink
+                            key={link.path}
+                            to={link.path}
+                            className={({ isActive }) =>
+                                `block w-full text-left px-4 py-3 rounded-lg font-medium transition-colors ${isActive ? 'bg-brand-gold/20 text-brand-gold' : 'text-gray-300 hover:bg-brand-gold/10 hover:text-brand-text'}`
+                            }
+                        >
+                            {link.name}
+                        </NavLink>
+                    ))}
+                    <div className="border-t border-gray-700 pt-3 space-y-2">
+                        {currentUser ? (
+                            <>
+                                <Button onClick={() => { setMobileMenuOpen(false); window.location.assign('#/dashboard'); }} variant="secondary" className="w-full text-sm">Dashboard</Button>
+                                <Button onClick={() => { setMobileMenuOpen(false); logout(); }} variant="primary" className="w-full text-sm">Logout</Button>
+                            </>
+                        ) : (
+                            <Button onClick={() => { setMobileMenuOpen(false); window.location.assign('#/login'); }} variant="primary" className="w-full text-sm">Login</Button>
+                        )}
+                    </div>
+                </div>
+            )}
         </header>
     );
 }

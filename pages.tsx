@@ -346,11 +346,11 @@ export const ContactPage: React.FC = () => {
     };
     
     return (
-        <div className="container mx-auto px-4 py-16 max-w-2xl">
+        <div className="container mx-auto px-4 py-8 sm:py-16 max-w-2xl">
             <SectionTitle title="Get In Touch" subtitle="Contact Me" />
-            <form onSubmit={handleSubmit} className="space-y-6 bg-brand-surface/50 backdrop-blur-sm p-8 rounded-lg border border-gray-800">
+            <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6 bg-brand-surface/50 backdrop-blur-sm p-4 sm:p-8 rounded-lg border border-gray-800">
                 {feedback && (
-                    <div className={`p-4 rounded-lg ${feedbackType === 'success' 
+                    <div className={`p-3 sm:p-4 rounded-lg text-sm sm:text-base ${feedbackType === 'success' 
                         ? 'bg-green-900/20 border border-green-700 text-green-300' 
                         : 'bg-red-900/20 border border-red-700 text-red-300'}`}>
                         {feedback}
@@ -358,50 +358,52 @@ export const ContactPage: React.FC = () => {
                 )}
                 
                 <div>
-                    <label htmlFor="name" className="block text-sm font-medium text-gray-300">Name *</label>
+                    <label htmlFor="name" className="block text-xs sm:text-sm font-medium text-gray-300 mb-1 sm:mb-2">Name *</label>
                     <input 
                         type="text" 
                         id="name" 
                         value={formState.name} 
                         onChange={handleChange} 
                         required
-                        className="mt-1 block w-full bg-brand-surface border border-gray-700 rounded-md shadow-sm py-2 px-3 text-brand-text focus:outline-none focus:ring-brand-gold focus:border-brand-gold"
+                        className="w-full bg-brand-surface border border-gray-700 rounded-md shadow-sm py-3 px-3 sm:py-2 sm:px-3 text-brand-text text-base focus:outline-none focus:ring-2 focus:ring-brand-gold focus:border-brand-gold min-h-[44px] sm:min-h-auto"
                         placeholder="Your name"
                     />
                 </div>
 
                 <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-300">Email *</label>
+                    <label htmlFor="email" className="block text-xs sm:text-sm font-medium text-gray-300 mb-1 sm:mb-2">Email *</label>
                     <input 
                         type="email" 
                         id="email" 
                         value={formState.email} 
                         onChange={handleChange} 
                         required
-                        className="mt-1 block w-full bg-brand-surface border border-gray-700 rounded-md shadow-sm py-2 px-3 text-brand-text focus:outline-none focus:ring-brand-gold focus:border-brand-gold"
+                        className="w-full bg-brand-surface border border-gray-700 rounded-md shadow-sm py-3 px-3 sm:py-2 sm:px-3 text-brand-text text-base focus:outline-none focus:ring-2 focus:ring-brand-gold focus:border-brand-gold min-h-[44px] sm:min-h-auto"
                         placeholder="your@email.com"
+                        autoComplete="email"
                     />
                 </div>
 
                 <div>
-                    <label htmlFor="phone" className="block text-sm font-medium text-gray-300">Phone (Optional)</label>
+                    <label htmlFor="phone" className="block text-xs sm:text-sm font-medium text-gray-300 mb-1 sm:mb-2">Phone (Optional)</label>
                     <input 
                         type="tel" 
                         id="phone" 
                         value={formState.phone} 
                         onChange={handleChange}
-                        className="mt-1 block w-full bg-brand-surface border border-gray-700 rounded-md shadow-sm py-2 px-3 text-brand-text focus:outline-none focus:ring-brand-gold focus:border-brand-gold"
+                        className="w-full bg-brand-surface border border-gray-700 rounded-md shadow-sm py-3 px-3 sm:py-2 sm:px-3 text-brand-text text-base focus:outline-none focus:ring-2 focus:ring-brand-gold focus:border-brand-gold min-h-[44px] sm:min-h-auto"
                         placeholder="Your phone number"
+                        autoComplete="tel"
                     />
                 </div>
 
                 <div>
-                    <label htmlFor="service_interest" className="block text-sm font-medium text-gray-300">Service Interest</label>
+                    <label htmlFor="service_interest" className="block text-xs sm:text-sm font-medium text-gray-300 mb-1 sm:mb-2">Service Interest</label>
                     <select 
                         id="service_interest" 
                         value={formState.service_interest} 
                         onChange={handleChange}
-                        className="mt-1 block w-full bg-brand-surface border border-gray-700 rounded-md shadow-sm py-2 px-3 text-brand-text focus:outline-none focus:ring-brand-gold focus:border-brand-gold"
+                        className="w-full bg-brand-surface border border-gray-700 rounded-md shadow-sm py-3 px-3 sm:py-2 sm:px-3 text-brand-text text-base focus:outline-none focus:ring-2 focus:ring-brand-gold focus:border-brand-gold min-h-[44px] sm:min-h-auto"
                     >
                         <option value="">Select a service...</option>
                         <option value="reel">Reel ($2000)</option>
@@ -412,14 +414,14 @@ export const ContactPage: React.FC = () => {
                 </div>
 
                 <div>
-                    <label htmlFor="message" className="block text-sm font-medium text-gray-300">Message *</label>
+                    <label htmlFor="message" className="block text-xs sm:text-sm font-medium text-gray-300 mb-1 sm:mb-2">Message *</label>
                     <textarea 
                         id="message" 
-                        rows={4} 
+                        rows={6} 
                         value={formState.message} 
                         onChange={handleChange} 
                         required
-                        className="mt-1 block w-full bg-brand-surface border border-gray-700 rounded-md shadow-sm py-2 px-3 text-brand-text focus:outline-none focus:ring-brand-gold focus:border-brand-gold"
+                        className="w-full bg-brand-surface border border-gray-700 rounded-md shadow-sm py-3 px-3 sm:py-2 sm:px-3 text-brand-text text-base focus:outline-none focus:ring-2 focus:ring-brand-gold focus:border-brand-gold min-h-[120px]"
                         placeholder="Tell me about your project..."
                     ></textarea>
                 </div>
@@ -427,7 +429,7 @@ export const ContactPage: React.FC = () => {
                 <div>
                     <Button 
                         type="submit" 
-                        className="w-full" 
+                        className="w-full text-base" 
                         disabled={submitting}
                     >
                         {submitting ? 'Sending...' : 'Send Enquiry'}

@@ -80,9 +80,9 @@ const UserIcon: React.FC<{className?: string}> = ({className="h-6 w-6"}) => (
 // --- UI ELEMENTS ---
 
 export const Logo: React.FC = () => (
-  <Link to="/" className="flex items-center space-x-2">
-    <VideoCameraIcon className="h-8 w-8 text-brand-gold" />
-    <span className="text-2xl font-serif font-bold tracking-wider text-white">Navaneethan Editor</span>
+  <Link to="/" className="flex items-center space-x-1 sm:space-x-2">
+    <VideoCameraIcon className="h-6 sm:h-8 w-6 sm:w-8 text-brand-gold" />
+    <span className="text-lg sm:text-2xl font-serif font-bold tracking-wider text-white truncate">Navaneethan</span>
   </Link>
 );
 
@@ -91,10 +91,10 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary';
 }
 export const Button: React.FC<ButtonProps> = ({ children, variant = 'primary', className, ...props }) => {
-  const baseClasses = "px-6 py-2.5 font-semibold rounded-md transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-brand-surface disabled:opacity-50 disabled:cursor-not-allowed";
+  const baseClasses = "px-4 sm:px-6 py-3 sm:py-2.5 text-sm sm:text-base font-semibold rounded-md transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-brand-surface disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px] sm:min-h-auto flex items-center justify-center";
   const variantClasses = variant === 'primary'
-    ? "bg-gradient-to-r from-brand-gold to-yellow-600 text-brand-black hover:shadow-[0_0_15px_rgba(212,160,23,0.4)] focus:ring-brand-gold"
-    : "bg-transparent border-2 border-brand-gold text-brand-gold hover:bg-brand-gold hover:text-brand-black";
+    ? "bg-gradient-to-r from-brand-gold to-yellow-600 text-brand-black hover:shadow-[0_0_15px_rgba(212,160,23,0.4)] focus:ring-brand-gold active:scale-95"
+    : "bg-transparent border-2 border-brand-gold text-brand-gold hover:bg-brand-gold hover:text-brand-black active:scale-95";
   
   return (
     <button className={`${baseClasses} ${variantClasses} ${className}`} {...props}>
@@ -104,9 +104,9 @@ export const Button: React.FC<ButtonProps> = ({ children, variant = 'primary', c
 };
 
 export const SectionTitle: React.FC<{title: string, subtitle: string}> = ({ title, subtitle }) => (
-  <div className="text-center mb-12">
-    <h3 className="text-sm uppercase text-brand-gold tracking-widest">{subtitle}</h3>
-    <h2 className="text-4xl md:text-5xl font-serif font-bold text-white mt-2">{title}</h2>
+  <div className="text-center mb-8 sm:mb-12 px-4">
+    <h3 className="text-xs sm:text-sm uppercase text-brand-gold tracking-widest">{subtitle}</h3>
+    <h2 className="text-2xl sm:text-4xl md:text-5xl font-serif font-bold text-white mt-2 leading-tight">{title}</h2>
   </div>
 );
 
