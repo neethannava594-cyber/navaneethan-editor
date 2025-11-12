@@ -444,17 +444,24 @@ export const LoginPage: React.FC = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const [showSuccess, setShowSuccess] = useState(false);
+    const [showError, setShowError] = useState(false);
     const { login, loading } = useAuth();
     const navigate = useNavigate();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
+        setShowError(false);
         const user = await login(email, password);
         if (user) {
-            navigate('/dashboard');
+            setShowSuccess(true);
+            setTimeout(() => {
+                navigate('/dashboard');
+            }, 1500);
         } else {
             setError('Invalid credentials. Please check your email and password.');
+            setShowError(true);
         }
     };
 
@@ -463,7 +470,35 @@ export const LoginPage: React.FC = () => {
             <div className="w-full max-w-md">
                 <form onSubmit={handleSubmit} className="bg-brand-surface/50 backdrop-blur-sm shadow-md rounded-lg px-8 pt-6 pb-8 mb-4 border border-gray-800">
                     <SectionTitle title="Login" subtitle="Welcome Back" />
-                    {error && <p className="bg-red-900/50 text-red-300 p-3 rounded-md mb-4 text-sm">{error}</p>}
+                    
+                    {/* Success Animation */}
+                    {showSuccess && (
+                        <div className="mb-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                            <div className="bg-gradient-to-r from-green-900/50 to-green-800/50 border-l-4 border-green-500 text-green-300 p-4 rounded-md flex items-center gap-3">
+                                <div className="flex-shrink-0">
+                                    <svg className="h-5 w-5 text-green-400 animate-bounce" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                    </svg>
+                                </div>
+                                <span className="font-semibold">Login successful! Redirecting...</span>
+                            </div>
+                        </div>
+                    )}
+                    
+                    {/* Error Animation */}
+                    {showError && error && (
+                        <div className="mb-4 animate-in fade-in shake duration-500">
+                            <div className="bg-gradient-to-r from-red-900/50 to-red-800/50 border-l-4 border-red-500 text-red-300 p-4 rounded-md flex items-start gap-3">
+                                <div className="flex-shrink-0 mt-0.5">
+                                    <svg className="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                                    </svg>
+                                </div>
+                                <span className="text-sm">{error}</span>
+                            </div>
+                        </div>
+                    )}
+                    
                     <div className="mb-4">
                         <label className="block text-gray-300 text-sm font-bold mb-2" htmlFor="email">Email</label>
                         <input value={email} onChange={e => setEmail(e.target.value)} className="shadow appearance-none border rounded w-full py-2 px-3 bg-brand-surface border-gray-700 text-brand-text leading-tight focus:outline-none focus:shadow-outline focus:border-brand-gold" id="email" type="email" placeholder="Email" />
@@ -473,7 +508,7 @@ export const LoginPage: React.FC = () => {
                         <input value={password} onChange={e => setPassword(e.target.value)} className="shadow appearance-none border rounded w-full py-2 px-3 bg-brand-surface border-gray-700 text-brand-text mb-3 leading-tight focus:outline-none focus:shadow-outline focus:border-brand-gold" id="password" type="password" placeholder="******************" />
                     </div>
                     <div className="flex items-center justify-between">
-                        <Button type="submit" disabled={loading}>{loading ? 'Logging in...' : 'Sign In'}</Button>
+                        <Button type="submit" disabled={loading || showSuccess} className={showSuccess ? 'opacity-75' : ''}>{loading ? '🔄 Logging in...' : showSuccess ? '✅ Logged in!' : 'Sign In'}</Button>
                     </div>
                     <p className="text-center mt-4 text-gray-400 text-sm">
                         Don't have an account? <a href="#/signup" className="text-brand-gold hover:text-yellow-300">Sign up here</a>
@@ -491,6 +526,8 @@ export const SignupPage: React.FC = () => {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [showError, setShowError] = useState(false);
+    const [showSuccess, setShowSuccess] = useState(false);
     const { signup, loading } = useAuth();
     const navigate = useNavigate();
 
@@ -498,25 +535,31 @@ export const SignupPage: React.FC = () => {
         e.preventDefault();
         setError('');
         setSuccess('');
+        setShowError(false);
+        setShowSuccess(false);
 
         if (password !== confirmPassword) {
-            setError('Passwords do not match.');
+            setError('❌ Passwords do not match.');
+            setShowError(true);
             return;
         }
 
         if (password.length < 6) {
-            setError('Password must be at least 6 characters long.');
+            setError('❌ Password must be at least 6 characters long.');
+            setShowError(true);
             return;
         }
 
         const user = await signup(name, email, password);
         if (user) {
-            setSuccess('Account created successfully! Redirecting to dashboard...');
+            setSuccess('✅ Account created successfully! Redirecting to dashboard...');
+            setShowSuccess(true);
             setTimeout(() => {
                 navigate('/dashboard');
             }, 1500);
         } else {
-            setError('Signup failed. Please try again or use a different email.');
+            setError('❌ Signup failed. Please try again or use a different email.');
+            setShowError(true);
         }
     };
 
@@ -525,8 +568,35 @@ export const SignupPage: React.FC = () => {
             <div className="w-full max-w-md">
                 <form onSubmit={handleSubmit} className="bg-brand-surface/50 backdrop-blur-sm shadow-md rounded-lg px-8 pt-6 pb-8 mb-4 border border-gray-800">
                     <SectionTitle title="Create Account" subtitle="Join Us" />
-                    {error && <p className="bg-red-900/50 text-red-300 p-3 rounded-md mb-4 text-sm">{error}</p>}
-                    {success && <p className="bg-green-900/50 text-green-300 p-3 rounded-md mb-4 text-sm">{success}</p>}
+                    
+                    {/* Success Animation */}
+                    {showSuccess && success && (
+                        <div className="mb-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                            <div className="bg-gradient-to-r from-green-900/50 to-green-800/50 border-l-4 border-green-500 text-green-300 p-4 rounded-md flex items-center gap-3">
+                                <div className="flex-shrink-0">
+                                    <svg className="h-5 w-5 text-green-400 animate-bounce" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                    </svg>
+                                </div>
+                                <span className="font-semibold">{success}</span>
+                            </div>
+                        </div>
+                    )}
+                    
+                    {/* Error Animation */}
+                    {showError && error && (
+                        <div className="mb-4 animate-in fade-in shake duration-500">
+                            <div className="bg-gradient-to-r from-red-900/50 to-red-800/50 border-l-4 border-red-500 text-red-300 p-4 rounded-md flex items-start gap-3">
+                                <div className="flex-shrink-0 mt-0.5">
+                                    <svg className="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                                    </svg>
+                                </div>
+                                <span className="text-sm">{error}</span>
+                            </div>
+                        </div>
+                    )}
+                    
                     <div className="mb-4">
                         <label className="block text-gray-300 text-sm font-bold mb-2" htmlFor="name">Full Name</label>
                         <input value={name} onChange={e => setName(e.target.value)} className="shadow appearance-none border rounded w-full py-2 px-3 bg-brand-surface border-gray-700 text-brand-text leading-tight focus:outline-none focus:shadow-outline focus:border-brand-gold" id="name" type="text" placeholder="Your Name" required />
@@ -544,7 +614,7 @@ export const SignupPage: React.FC = () => {
                         <input value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className="shadow appearance-none border rounded w-full py-2 px-3 bg-brand-surface border-gray-700 text-brand-text mb-3 leading-tight focus:outline-none focus:shadow-outline focus:border-brand-gold" id="confirmPassword" type="password" placeholder="Confirm your password" required />
                     </div>
                     <div className="flex items-center justify-between">
-                        <Button type="submit" disabled={loading}>{loading ? 'Creating Account...' : 'Sign Up'}</Button>
+                        <Button type="submit" disabled={loading || showSuccess} className={showSuccess ? 'opacity-75' : ''}>{loading ? '🔄 Creating Account...' : showSuccess ? '✅ Account Created!' : 'Sign Up'}</Button>
                     </div>
                     <p className="text-center mt-4 text-gray-400 text-sm">
                         Already have an account? <a href="#/login" className="text-brand-gold hover:text-yellow-300">Login here</a>
