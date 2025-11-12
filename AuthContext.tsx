@@ -1,6 +1,6 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import { User } from './types';
-import { apiGetMe, apiLogin, apiSignup, supabase } from './api';
+import { apiGetMe, apiLogin, apiSignup, apiSaveSignInLog, apiSaveSignOutLog, supabase } from './api';
 
 interface AuthContextType {
   currentUser: User | null;
@@ -66,6 +66,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (data.user) {
         const user = mapSupabaseUserToUser(data.user);
         setCurrentUser(user);
+        
+        // Save sign-in log
+        console.log('📊 Recording sign-in data for:', email);
+        await apiSaveSignInLog(
+          data.user.id,
+          email,
+          user.name,
+          user.phone
+        );
+        
         setLoading(false);
         return user;
       }
@@ -80,6 +90,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const logout = async () => {
     try {
+      // Save sign-out log before logging out
+      if (currentUser) {
+        console.log('📊 Recording sign-out data for:', currentUser.email);
+        await apiSaveSignOutLog(currentUser.id);
+      }
+      
       await supabase.auth.signOut();
       setCurrentUser(null);
       window.location.hash = '/login';

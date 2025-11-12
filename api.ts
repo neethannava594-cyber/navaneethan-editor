@@ -347,3 +347,165 @@ export const apiDeletePortfolioVideo = async (videoId: string) => {
         throw error;
     }
 };
+
+// --- Sign-In Logging Functions ---
+
+// Helper function to get device type
+const getDeviceType = (): string => {
+    const ua = navigator.userAgent;
+    if (/mobile|android|iphone|ipad|phone/i.test(ua.toLowerCase())) {
+        return 'mobile';
+    } else if (/tablet|ipad|android/i.test(ua.toLowerCase())) {
+        return 'tablet';
+    }
+    return 'desktop';
+};
+
+// Save sign-in data when user logs in
+export const apiSaveSignInLog = async (
+    userId: string,
+    email: string,
+    name?: string,
+    phone?: string
+) => {
+    try {
+        console.log('🔵 Saving sign-in log for user:', email);
+
+        const signInData = {
+            user_id: userId,
+            email,
+            name: name || null,
+            phone: phone || null,
+            sign_in_time: new Date().toISOString(),
+            ip_address: 'browser', // Note: IP address cannot be reliably obtained from browser
+            user_agent: navigator.userAgent,
+            device_type: getDeviceType(),
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+        };
+
+        const { data, error } = await supabase
+            .from('signin_logs')
+            .insert([signInData]);
+
+        if (error) {
+            console.error('❌ Error saving sign-in log:', error.message);
+            throw error;
+        }
+
+        console.log('✅ Sign-in log saved successfully');
+        return data;
+    } catch (error) {
+        console.error('❌ Failed to save sign-in log:', error);
+        // Don't throw - this shouldn't block the login flow
+        return null;
+    }
+};
+
+// Save sign-out data when user logs out
+export const apiSaveSignOutLog = async (userId: string) => {
+    try {
+        console.log('🔵 Saving sign-out log for user:', userId);
+
+        // Get the most recent sign-in log for this user that doesn't have a sign_out_time
+        const { data: signInLogs, error: fetchError } = await supabase
+            .from('signin_logs')
+            .select('id, sign_in_time')
+            .eq('user_id', userId)
+            .is('sign_out_time', null)
+            .order('sign_in_time', { ascending: false })
+            .limit(1);
+
+        if (fetchError) {
+            console.error('❌ Error fetching sign-in log:', fetchError.message);
+            return null;
+        }
+
+        if (!signInLogs || signInLogs.length === 0) {
+            console.warn('⚠️ No active sign-in log found for user');
+            return null;
+        }
+
+        const signInLog = signInLogs[0];
+        const signOutTime = new Date().toISOString();
+        
+        // Calculate session duration in minutes
+        const signInDate = new Date(signInLog.sign_in_time);
+        const signOutDate = new Date(signOutTime);
+        const sessionDurationMinutes = Math.round((signOutDate.getTime() - signInDate.getTime()) / 60000);
+
+        const { data, error } = await supabase
+            .from('signin_logs')
+            .update({
+                sign_out_time: signOutTime,
+                session_duration_minutes: sessionDurationMinutes,
+                updated_at: new Date().toISOString(),
+            })
+            .eq('id', signInLog.id);
+
+        if (error) {
+            console.error('❌ Error saving sign-out log:', error.message);
+            return null;
+        }
+
+        console.log('✅ Sign-out log saved successfully (session duration: ' + sessionDurationMinutes + ' minutes)');
+        return data;
+    } catch (error) {
+        console.error('❌ Failed to save sign-out log:', error);
+        return null;
+    }
+};
+
+// Get all sign-in logs for current user
+export const apiGetMySignInLogs = async () => {
+    try {
+        console.log('🔵 Fetching sign-in logs...');
+
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        
+        if (userError || !user) {
+            console.error('❌ Error getting current user:', userError?.message);
+            throw new Error('User not authenticated');
+        }
+
+        const { data, error } = await supabase
+            .from('signin_logs')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('sign_in_time', { ascending: false });
+
+        if (error) {
+            console.error('❌ Error fetching sign-in logs:', error.message);
+            throw error;
+        }
+
+        console.log('✅ Retrieved ' + (data?.length || 0) + ' sign-in logs');
+        return data || [];
+    } catch (error) {
+        console.error('❌ Failed to get sign-in logs:', error);
+        throw error;
+    }
+};
+
+// Get all sign-in logs (admin only)
+export const apiGetAllSignInLogs = async () => {
+    try {
+        console.log('🔵 Fetching all sign-in logs (admin)...');
+
+        const { data, error } = await supabase
+            .from('signin_logs')
+            .select('*')
+            .order('sign_in_time', { ascending: false });
+
+        if (error) {
+            console.error('❌ Error fetching all sign-in logs:', error.message);
+            throw error;
+        }
+
+        console.log('✅ Retrieved ' + (data?.length || 0) + ' total sign-in logs');
+        return data || [];
+    } catch (error) {
+        console.error('❌ Failed to get all sign-in logs:', error);
+        throw error;
+    }
+};
